@@ -1,6 +1,6 @@
 # EKS Operation Review Skill
 
-[![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT--0-brightgreen.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Skill-7C3AED.svg)](https://claude.ai/claude-code)
 
@@ -37,8 +37,8 @@ Checks are informed by the [EKS Best Practices Guide](https://docs.aws.amazon.co
 ### Quick Start
 
 ```bash
-git clone https://github.com/kahhaw9368/eks-operation-review-skill.git
-cd eks-operation-review-skill
+git clone git@ssh.gitlab.aws.dev:kahhaw/sample-eks-operation-review-skill.git
+cd sample-eks-operation-review-skill
 claude
 ```
 
@@ -238,4 +238,4 @@ If you discover a security issue, please report it via [GitHub Issues](https://g
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT-0 License](LICENSE).
