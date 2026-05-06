@@ -8,6 +8,8 @@ A [Claude Code](https://claude.ai/claude-code) skill that performs automated EKS
 
 Checks are informed by the [EKS Best Practices Guide](https://docs.aws.amazon.com/eks/latest/best-practices/) and [EKS User Guide](https://docs.aws.amazon.com/eks/latest/userguide/). All operations are **read-only** — the skill does not modify your cluster.
 
+> **Disclaimer:** This is sample code provided for educational and demonstration purposes only. It is not production-ready and should be reviewed, tested, and validated against your organization's security and operational requirements before use. The IAM permissions, MCP server configuration, and assessment logic should be adapted for your environment.
+
 <p align="center">
   <img src="docs/sample-report-summary.png" alt="Sample EKS Operation Review Report" width="720">
 </p>
@@ -37,7 +39,7 @@ Checks are informed by the [EKS Best Practices Guide](https://docs.aws.amazon.co
 ### Quick Start
 
 ```bash
-git clone git@ssh.gitlab.aws.dev:kahhaw/sample-eks-operation-review-skill.git
+git clone https://github.com/aws-samples/sample-eks-operation-review-skill.git
 cd sample-eks-operation-review-skill
 claude
 ```
@@ -94,6 +96,8 @@ Each report includes an executive summary, maturity score, per-section findings 
 ## MCP Server Setup
 
 This skill uses two MCP servers, both pre-configured in `.mcp.json`. No setup is needed for the default configuration — just clone and run.
+
+> **MCP server versions are pinned** (`awslabs.eks-mcp-server@0.1.28`, `awslabs.aws-documentation-mcp-server@1.1.21`) to keep behaviour reproducible and avoid pulling unreviewed upstream updates. To upgrade, bump the version strings in `.mcp.json` after reviewing the upstream changelog at [awslabs/mcp](https://github.com/awslabs/mcp/releases).
 
 <details>
 <summary><strong>Switching to the AWS-Managed EKS MCP Server</strong></summary>
@@ -152,18 +156,48 @@ Claude Code merges MCP config from global (`~/.claude/settings.json`) and projec
 
 ### AWS IAM
 
-Minimum IAM permissions:
+Replace `<region>` and `<account-id>` with your values. The second statement uses `"*"` because those actions do not support resource-level permissions — see the [AWS service authorization reference](https://docs.aws.amazon.com/service-authorization/latest/reference/reference_policies_actions-resources-contextkeys.html).
 
-```
-eks:ListClusters, eks:DescribeCluster, eks:ListNodegroups,
-eks:DescribeNodegroup, eks:ListAddons, eks:DescribeAddon,
-eks:ListInsights, eks:DescribeInsight, eks:ListAccessEntries,
-eks:ListPodIdentityAssociations, eks:DescribeAddonVersions
-ec2:DescribeSubnets, ec2:DescribeVpcs
-iam:ListAttachedRolePolicies, iam:ListRolePolicies,
-iam:GetPolicy, iam:GetPolicyVersion
-logs:DescribeLogGroups
-cloudwatch:DescribeAlarms
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EKSReadScoped",
+      "Effect": "Allow",
+      "Action": [
+        "eks:DescribeCluster",
+        "eks:ListNodegroups",
+        "eks:DescribeNodegroup",
+        "eks:ListAddons",
+        "eks:DescribeAddon",
+        "eks:DescribeAddonVersions",
+        "eks:ListInsights",
+        "eks:DescribeInsight",
+        "eks:ListAccessEntries",
+        "eks:DescribeAccessEntry",
+        "eks:ListPodIdentityAssociations"
+      ],
+      "Resource": "arn:aws:eks:<region>:<account-id>:cluster/*"
+    },
+    {
+      "Sid": "AccountLevelReads",
+      "Effect": "Allow",
+      "Action": [
+        "eks:ListClusters",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeVpcs",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListRolePolicies",
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "logs:DescribeLogGroups",
+        "cloudwatch:DescribeAlarms"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
 ```
 
 > **Tip:** If using the AWS-managed EKS MCP server, attach the `AmazonEKSMCPReadOnlyAccess` managed policy instead.
@@ -186,7 +220,7 @@ Your IAM identity needs read access to Kubernetes resources (Nodes, Pods, Deploy
 
 1. Check Python and uv are installed: `uv --version`
 2. Check AWS credentials: `aws sts get-caller-identity`
-3. Test the MCP server directly: `uvx awslabs.eks-mcp-server@latest`
+3. Test the MCP server directly: `uvx awslabs.eks-mcp-server@0.1.28`
 4. Verify `AWS_PROFILE` and `AWS_REGION` in `.mcp.json` match your environment
 
 </details>
@@ -228,13 +262,13 @@ tools/report_to_html.py          # Markdown → HTML converter
 
 ## Contributing
 
-Contributions are welcome. Please [open an issue](https://github.com/kahhaw9368/eks-operation-review-skill/issues) first to discuss what you'd like to change.
+Contributions are welcome. Please [open an issue](https://github.com/aws-samples/sample-eks-operation-review-skill/issues) first to discuss what you'd like to change.
 
 ## Security
 
 This skill is **read-only** and does not create, modify, or delete any AWS or Kubernetes resources. All operations are describe, list, and get calls.
 
-If you discover a security issue, please report it via [GitHub Issues](https://github.com/kahhaw9368/eks-operation-review-skill/issues) rather than a public comment.
+If you discover a security vulnerability, please see [SECURITY.md](SECURITY.md) for responsible disclosure instructions. Do not open a public issue for security vulnerabilities.
 
 ## License
 

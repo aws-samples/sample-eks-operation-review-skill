@@ -14,7 +14,10 @@ Usage:
 import re
 import sys
 import html
+import urllib.parse
 from pathlib import Path
+
+_ALLOWED_URL_SCHEMES = {'http', 'https', 'mailto'}
 
 CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
@@ -53,13 +56,43 @@ p{margin:.5rem 0}
 
 
 def escape(text):
-    return html.escape(text, quote=False)
+    return html.escape(text, quote=True)
+
+
+def _safe_href(url):
+    """Return the URL if its scheme is allowlisted, otherwise '#'.
+
+    Relative links (no scheme) and fragments are treated as safe.
+    Control characters are stripped because browsers historically ignored
+    them inside schemes, allowing `java\tscript:` to still execute.
+    """
+    cleaned = ''.join(c for c in url.strip() if c >= ' ' and c != '\x7f')
+    try:
+        parsed = urllib.parse.urlparse(cleaned)
+    except ValueError:
+        return '#'
+    scheme = parsed.scheme.lower()
+    if scheme and scheme not in _ALLOWED_URL_SCHEMES:
+        return '#'
+    return cleaned
+
+
+def _link_sub(match):
+    text = match.group(1)
+    url = _safe_href(match.group(2))
+    return f'<a href="{url}">{text}</a>'
 
 
 def inline_format(text):
-    """Process inline markdown: bold, code, links, emoji badges."""
-    # Links: [text](url)
-    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', text)
+    """Process inline markdown: bold, code, links, emoji badges.
+
+    Input must already be HTML-escaped with quote=True by the caller.
+    Link hrefs are validated against a scheme allowlist; because `"` and
+    `&` in the URL are already escaped to `&quot;`/`&amp;`, cluster-derived
+    strings cannot break out of the href attribute.
+    """
+    # Links: [text](url) — scheme-allowlisted, href-escaped
+    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _link_sub, text)
     # Bold: **text**
     text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
     # Inline code: `text`
