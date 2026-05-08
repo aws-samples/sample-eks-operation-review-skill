@@ -135,7 +135,7 @@ Update the `env` block for the EKS MCP server in `.mcp.json`:
 ```json
 "env": {
   "AWS_PROFILE": "your-profile",
-  "AWS_REGION": "us-west-2",
+  "AWS_REGION": "your-region",
   "FASTMCP_LOG_LEVEL": "ERROR"
 }
 ```
