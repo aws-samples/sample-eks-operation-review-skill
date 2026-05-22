@@ -82,7 +82,7 @@ If you need to use a specific profile or region, update the EKS MCP server confi
 
 ## Getting Started
 
-Run: `/eks-review`
+Run: `/eks-operation-review`
 
 The skill will automatically discover your clusters and walk you through the assessment.
 
@@ -155,6 +155,8 @@ Read each steering file in section order using the Read tool. For each section:
 1. Read the steering file from `steering/` directory
 2. Execute the checks described in it
 3. Rate each item using the rubric below
+
+**Error recovery:** If a section fails entirely (MCP server unreachable, permissions denied for all checks in that section, or repeated timeouts), mark all items in that section as UNKNOWN with a note explaining the failure reason, then proceed to the next section. Do not let one failed section block the rest of the assessment.
 
 ### Step 11: Generate Report
 

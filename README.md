@@ -52,7 +52,7 @@ On first launch, Claude Code will prompt you to enable two MCP servers from `.mc
 Then run:
 
 ```
-/eks-review
+/eks-operation-review
 ```
 
 The skill discovers your EKS clusters, asks you to pick one, and walks you through the assessment.
@@ -242,7 +242,7 @@ Ensure your IAM identity has the permissions listed in [Required Permissions](#r
 ## Project Structure
 
 ```
-.claude/commands/eks-review.md   # Skill entry point
+.claude/commands/eks-operation-review.md   # Skill entry point
 CLAUDE.md                        # Instructions for Claude Code
 .mcp.json                        # MCP server configuration
 steering/                        # Per-section check instructions

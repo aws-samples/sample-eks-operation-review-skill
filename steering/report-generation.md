@@ -46,6 +46,13 @@ Cross-reference against the master list:
 
 Every entry must include the finding ID and name (e.g., "4.1 — Control Plane Logging 🔴").
 
+**Ordering within Critical:** List RED items by blast radius category:
+1. Security first — public API endpoint, hardcoded credentials, no PSA/network policies, overly broad RBAC
+2. Availability next — no PDBs, single-replica critical workloads, missing health probes, no alerting
+3. Cost last — extended support billing, deprecated storage classes
+
+Within each category, order by scope (cluster-wide before namespace-scoped).
+
 ### Step 6: Write Investigate Manually
 
 All UNKNOWN items with specific questions the user should answer.

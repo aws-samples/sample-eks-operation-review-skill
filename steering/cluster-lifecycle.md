@@ -35,8 +35,10 @@ Use this table to determine the ACTUAL support status. Do NOT guess or use train
 2. Match the version against the calendar table above
 3. Report: version, standard/extended status, and when current support period ends
 
+**Version out-of-range guard:** If the cluster version is higher than the highest version in this table (currently 1.35), rate GREEN — a newer version is by definition on standard support. Add a note: "Version 1.X is newer than the reference table (last verified YYYY-MM-DD). Rated GREEN as latest. Update the table when convenient."
+
 **Rating:**
-- 🟢 GREEN: On v1.35 or v1.34 (latest or N-1, standard support)
+- 🟢 GREEN: On v1.35 or v1.34 (latest or N-1, standard support), OR version newer than table
 - 🟡 AMBER: On v1.33 or v1.32 (standard support but older)
 - 🔴 RED: On v1.31 or below (extended support — paying $0.60/hr vs $0.10/hr, 6x premium)
 - ⬜ UNKNOWN: Cannot determine (should not happen with live access)
@@ -56,7 +58,7 @@ Use this table to determine the ACTUAL support status. Do NOT guess or use train
 **How to check:**
 1. List node groups → describe each for version, AMI type, capacity type
 2. List nodes via Kubernetes API → get kubelet versions
-3. Check for Karpenter NodePools (`nodepools.karpenter.sh`)
+3. Check for Karpenter NodePools (`nodepools.karpenter.sh`). If 404/NotFound (CRD not installed) → Karpenter is not deployed, rate based on other node management. If 403/Forbidden → mark Karpenter status UNKNOWN.
 4. Describe cluster → check `computeConfig` for Auto Mode
 
 **Rating:**

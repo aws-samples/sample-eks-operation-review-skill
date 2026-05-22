@@ -110,7 +110,7 @@ Assess workload resilience: resource requests/limits, health probes, disruption 
 2. List PVCs across all namespaces
 3. List CSIDrivers
 4. Describe addon `aws-ebs-csi-driver`
-5. List VolumeSnapshotClasses (if CRD exists)
+5. List VolumeSnapshotClasses. If 404/NotFound (CRD not installed) → no snapshot support configured, factor into rating. If 403/Forbidden → mark snapshot capability UNKNOWN.
 6. List StatefulSets across all namespaces
 7. List PersistentVolumes → check for `spec.awsElasticBlockStore` (deprecated in-tree)
 

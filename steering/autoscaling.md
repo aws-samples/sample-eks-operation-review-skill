@@ -16,7 +16,7 @@ Assess cluster-level autoscaling (nodes) and workload-level autoscaling (pods), 
 - Currently pending pods
 
 **How to check:**
-1. List resources `nodepools.karpenter.sh` → check limits and consolidation policy
+1. List resources `nodepools.karpenter.sh` → check limits and consolidation policy. If 404/NotFound (CRD not installed) → Karpenter is not deployed, proceed to check for Cluster Autoscaler or Auto Mode. If 403/Forbidden → mark Karpenter status UNKNOWN.
 2. List Deployments in kube-system → check for `cluster-autoscaler`
 3. Describe cluster → `computeConfig` for Auto Mode
 4. List node groups → describe each for scalingConfig and capacityType
@@ -44,8 +44,8 @@ Assess cluster-level autoscaling (nodes) and workload-level autoscaling (pods), 
 1. List HPAs across all namespaces → check minReplicas, maxReplicas, current metrics
 2. List Deployments with replicas > 1 → cross-reference with HPA targets
 3. List HPAs where minReplicas == 1 (single point of failure for production workloads; acceptable for dev/staging)
-4. List ScaledObjects (KEDA CRD, if exists)
-5. List VPA resources (if CRD exists)
+4. List ScaledObjects (KEDA CRD). If 404/NotFound → KEDA not installed, skip. If 403/Forbidden → mark UNKNOWN.
+5. List VPA resources. If 404/NotFound → VPA not installed, skip. If 403/Forbidden → mark UNKNOWN.
 
 **Rating:**
 - 🟢 GREEN: HPAs on stateless production workloads, min >= 2, tested under load

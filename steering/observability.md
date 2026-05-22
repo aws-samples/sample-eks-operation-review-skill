@@ -81,7 +81,7 @@ Assess observability across three layers: control plane, data plane (nodes), and
 
 **How to check:**
 1. List pods with label `app.kubernetes.io/name=alertmanager`
-2. List PrometheusRule resources (if CRD exists)
+2. List PrometheusRule resources. If 404/NotFound (CRD not installed) → Prometheus Operator not deployed, rate alerting based on CloudWatch only. If 403/Forbidden → mark UNKNOWN.
 3. Use CloudWatch tools to list alarms with ContainerInsights namespace
 
 **Rating:**
