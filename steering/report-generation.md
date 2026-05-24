@@ -46,6 +46,8 @@ Cross-reference against the master list:
 
 Every entry must include the finding ID and name (e.g., "4.1 — Control Plane Logging 🔴").
 
+**One row per finding.** Never bundle multiple findings into a single row (e.g., "2.2/2.3 — GitOps & Drift Detection"). Each finding has its own context, action, and references — collapsing them hides information and breaks the "every RED must appear in Critical" consistency rule. If two findings genuinely share an action, list them on separate rows that point to the same action.
+
 **Ordering within Critical:** List RED items by blast radius category:
 1. Security first — public API endpoint, hardcoded credentials, no PSA/network policies, overly broad RBAC
 2. Availability next — no PDBs, single-replica critical workloads, missing health probes, no alerting
