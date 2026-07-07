@@ -17,3 +17,7 @@ venv/
 # Environment / credentials
 .env
 .env.local
+
+# DevOps Agent skill package
+*-skill.zip
+eks-operation-review-skill.zip
