@@ -7,7 +7,7 @@ description: >-
   operational processes, and add-on management. Produces a GREEN/AMBER/RED rated report
   with prioritized recommendations. Activate for any request to audit, review,
   health-check, or score an EKS cluster operational posture, including section-scoped
-  reviews. Not for upgrade readiness, cluster discovery, or architectural design advice.
+  reviews, including current-state add-on and deprecated-API review with no target version. Not for upgrade readiness assessment against a target version, cluster discovery, or architectural design advice.
 ---
 
 # EKS Operation Review
@@ -43,6 +43,7 @@ HARD STOP triggers:
 2. No EKS clusters found in the configured region
 3. Cluster access denied — IAM permissions or Kubernetes RBAC (the agent's role cannot describe the cluster or reach the Kubernetes API)
 4. EKS or Kubernetes API access is not available or does not respond
+5. A user-named cluster does not exist — if the user specified a cluster and DescribeCluster returns not-found (or it is absent from ListClusters), STOP immediately and report the error; do not fall back to a different cluster
 
 ### Passing Inputs
 
@@ -62,7 +63,7 @@ Before executing checks for any section, load the corresponding reference file f
 | User Request | Reference File(s) to Load |
 |---|---|
 | Full review / assess / audit / health check | ALL files in order: cluster-lifecycle → addon-management, then report-generation |
-| Upgrade / version / deprecated API | `references/cluster-lifecycle.md` |
+| Version currency / lifecycle (current state) | `references/cluster-lifecycle.md` |
 | IRSA / RBAC / access / pod identity / endpoint | `references/access-identity.md` |
 | Logging / metrics / alerting / observability | `references/observability.md` |
 | Resource requests / probes / PDB / image tags / storage | `references/workload-configuration.md` |
@@ -71,7 +72,7 @@ Before executing checks for any section, load the corresponding reference file f
 | Deployment / rollout / CI/CD / graceful shutdown | `references/deployment-practices.md` |
 | Runbook / on-call / backup / DR / Velero | `references/operational-processes.md` |
 | Add-on / node monitoring / cluster insights | `references/addon-management.md` |
-| Generate / write report | `references/report-generation.md` |
+| Deliver report | `references/report-generation.md` |
 | IaC / GitOps / ArgoCD / Flux / drift | `references/infrastructure-as-code.md` |
 
 ## Assessment Overview
@@ -98,7 +99,7 @@ Before executing checks for any section, load the corresponding reference file f
 Verify access before starting the assessment:
 
 1. **List clusters** — use EKS ListClusters API. If multiple found and none specified → HARD STOP with list. If one found → proceed with that cluster.
-2. **Describe cluster** — use EKS DescribeCluster API. Report: cluster name, Kubernetes version, platform version, region, status, authentication mode.
+2. **Describe cluster** — use EKS DescribeCluster API. Report: cluster name, Kubernetes version, platform version, region, status, authentication mode. If the cluster status is not ACTIVE (e.g., UPDATING, CREATING), note the status in the report and proceed with the data available — do NOT HARD STOP on a non-ACTIVE status.
 3. **Verify Kubernetes access** — list Nodes via Kubernetes API.
    - Success → proceed
    - Failure → HARD STOP with access error details

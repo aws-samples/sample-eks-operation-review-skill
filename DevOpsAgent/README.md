@@ -19,7 +19,6 @@ DevOpsAgent/
 │   ├── operational-processes.md
 │   ├── addon-management.md
 │   └── report-generation.md
-├── assets/               # Data files (currently empty — extend as needed)
 └── README.md             # This file
 ```
 
@@ -98,8 +97,8 @@ For a clean single-pass run, specify cluster name and region up front.
 | Entry point | `.claude/commands/eks-operation-review.md` | `SKILL.md` (flat folder root) |
 | Check logic | `steering/` directory | `references/` directory |
 | HTML conversion | `tools/report_to_html.py` script | Agent generates HTML inline |
-| Live AWS docs | `awslabs.aws-documentation-mcp-server` MCP | Not bundled; uses embedded reference URLs. Connect a docs MCP at Agent Space level for live lookups |
-| EKS API access | `awslabs.eks-mcp-server` MCP (bundled) | Configured at Agent Space level (IAM role + EKS access entry) |
+| Live AWS docs | A documentation MCP server | Not bundled; uses embedded reference URLs. Connect a docs MCP at Agent Space level for live lookups |
+| EKS API access | The EKS MCP server | Configured at Agent Space level (IAM role + EKS access entry) |
 | Interaction model | Interactive (asks user mid-run) | Autonomous with HARD STOP on ambiguity |
 | Tool names | Specific MCP tool names (`list_k8s_resources`, etc.) | Generic capability phrases (EKS APIs, Kubernetes APIs) |
 | Executables | Python scripts allowed | No executables — documents only |

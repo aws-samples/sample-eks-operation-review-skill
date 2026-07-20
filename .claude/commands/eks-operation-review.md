@@ -18,7 +18,7 @@ Before executing checks for any section, read the corresponding steering file fr
 | User Request | Steering File(s) to Load |
 |---|---|
 | Full review / assess / audit / health check | ALL files in order: cluster-lifecycle -> addon-management, then report-generation |
-| Upgrade / version / deprecated API | `steering/cluster-lifecycle.md` |
+| Version currency / lifecycle (current state) | `steering/cluster-lifecycle.md` |
 | IRSA / RBAC / access / pod identity / endpoint | `steering/access-identity.md` |
 | Logging / metrics / alerting / observability | `steering/observability.md` |
 | Resource requests / probes / PDB / image tags / storage | `steering/workload-configuration.md` |
