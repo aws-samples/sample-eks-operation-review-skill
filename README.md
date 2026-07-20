@@ -156,43 +156,67 @@ Claude Code merges MCP config from global (`~/.claude/settings.json`) and projec
 
 ### AWS IAM
 
-Replace `<region>` and `<account-id>` with your values. The second statement uses `"*"` because those actions do not support resource-level permissions — see the [AWS service authorization reference](https://docs.aws.amazon.com/service-authorization/latest/reference/reference_policies_actions-resources-contextkeys.html).
+Replace `<region>` and `<account-id>` with your values. The scoped statements grant per-resource-type reads (cluster, node group, add-on, access entry, ECR repository). The final `"*"` statement covers two kinds of actions: ones that genuinely do not support resource-level permissions (`eks:ListClusters`, `eks:DescribeAddonVersions`, `eks:DescribeClusterVersions`, the `ec2:*` and `logs:*` reads, and `backup:ListBackupPlans`), and a few that *do* support resource ARNs (`iam:ListAttachedRolePolicies`/`iam:ListRolePolicies` → `role`, `iam:GetPolicy`/`iam:GetPolicyVersion` → `policy`, `cloudwatch:DescribeAlarms` → `alarm`) but are left at `"*"` for operational simplicity, since the specific roles, policies, and alarms are not known at policy-creation time — see the [AWS service authorization reference](https://docs.aws.amazon.com/service-authorization/latest/reference/reference_policies_actions-resources-contextkeys.html).
 
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "EKSReadScoped",
+      "Sid": "EKSClusterScopedReads",
       "Effect": "Allow",
       "Action": [
         "eks:DescribeCluster",
         "eks:ListNodegroups",
-        "eks:DescribeNodegroup",
         "eks:ListAddons",
-        "eks:DescribeAddon",
-        "eks:DescribeAddonVersions",
         "eks:ListInsights",
         "eks:DescribeInsight",
         "eks:ListAccessEntries",
-        "eks:DescribeAccessEntry",
         "eks:ListPodIdentityAssociations"
       ],
       "Resource": "arn:aws:eks:<region>:<account-id>:cluster/*"
+    },
+    {
+      "Sid": "EKSNodegroupReads",
+      "Effect": "Allow",
+      "Action": "eks:DescribeNodegroup",
+      "Resource": "arn:aws:eks:<region>:<account-id>:nodegroup/*/*/*"
+    },
+    {
+      "Sid": "EKSAddonReads",
+      "Effect": "Allow",
+      "Action": "eks:DescribeAddon",
+      "Resource": "arn:aws:eks:<region>:<account-id>:addon/*/*/*"
+    },
+    {
+      "Sid": "EKSAccessEntryReads",
+      "Effect": "Allow",
+      "Action": "eks:DescribeAccessEntry",
+      "Resource": "arn:aws:eks:<region>:<account-id>:access-entry/*/*/*"
+    },
+    {
+      "Sid": "ECRReads",
+      "Effect": "Allow",
+      "Action": "ecr:DescribeRepositories",
+      "Resource": "arn:aws:ecr:<region>:<account-id>:repository/*"
     },
     {
       "Sid": "AccountLevelReads",
       "Effect": "Allow",
       "Action": [
         "eks:ListClusters",
+        "eks:DescribeAddonVersions",
+        "eks:DescribeClusterVersions",
         "ec2:DescribeSubnets",
         "ec2:DescribeVpcs",
+        "ec2:DescribeSecurityGroupRules",
         "iam:ListAttachedRolePolicies",
         "iam:ListRolePolicies",
         "iam:GetPolicy",
         "iam:GetPolicyVersion",
         "logs:DescribeLogGroups",
-        "cloudwatch:DescribeAlarms"
+        "cloudwatch:DescribeAlarms",
+        "backup:ListBackupPlans"
       ],
       "Resource": "*"
     }

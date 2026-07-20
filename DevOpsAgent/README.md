@@ -74,7 +74,8 @@ Quick setup:
 
 3. The Agent Space primary account role also needs these AWS API permissions:
    - `eks:Describe*`, `eks:List*`
-   - `ec2:DescribeSubnets`, `ec2:DescribeVpcs`
+   - `ec2:DescribeSubnets`, `ec2:DescribeVpcs`, `ec2:DescribeSecurityGroupRules`
+   - `ecr:DescribeRepositories`
    - `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`
    - `logs:DescribeLogGroups`
    - `cloudwatch:DescribeAlarms`
