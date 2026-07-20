@@ -171,6 +171,7 @@ Read `steering/report-generation.md` and produce the report.
 | GREEN | Fully implemented -- matches EKS best practices |
 | AMBER | Partial or inconsistent -- improvement opportunity |
 | RED | Not implemented or significant gap -- action needed |
+| N/A | Check does not apply to this cluster (e.g. no stateful workloads) -- excluded from scoring |
 | UNKNOWN | Cannot be determined from cluster data -- investigate manually |
 
 ### Rules
@@ -188,7 +189,7 @@ Read `steering/report-generation.md` and produce the report.
 
 1. **Ratings must be consistent across the entire report.** If 4.1 is RED in the findings table, it must appear as RED everywhere -- executive summary, prioritized actions, quick wins.
 2. **Prioritized Actions must reference the finding ID.** Write "4.1 -- Control Plane Logging RED" not just "Enable logging".
-3. **Every RED must appear in Critical or Important.** Every AMBER must appear in Important or Quick Wins. Nothing rated RED/AMBER can be missing from Prioritized Actions.
+3. **Every RED must appear in Critical (or Quick Wins if <1hr). Every AMBER must appear in Important (or Quick Wins if <1hr).** Nothing rated RED/AMBER can be missing from Prioritized Actions.
 4. **Executive Summary must match the findings.** Do not call something a "critical gap" if it's AMBER, or skip a RED item.
 
 ### File Output
@@ -212,6 +213,7 @@ Date: [YYYY-MM-DD HH:MM]
 | GREEN | X | X% |
 | AMBER | X | X% |
 | RED | X | X% |
+| N/A | X | -- |
 | UNKNOWN | X | -- |
 
 ## Findings

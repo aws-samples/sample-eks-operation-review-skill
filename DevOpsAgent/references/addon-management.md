@@ -21,10 +21,7 @@ Assess add-on management maturity, node health monitoring, and cluster insights 
 3. List PersistentVolumes → check for `spec.awsElasticBlockStore` (deprecated in-tree)
 
 **Rating:**
-- 🟢 GREEN: All core add-ons are EKS Managed, on latest or N-1 version, healthy
-- 🟡 AMBER: Managed but behind (>1 minor version), or mix of managed and self-managed
-- 🔴 RED: Core add-ons self-managed with no version tracking, health issues, or deprecated in-tree plugin
-- ⬜ UNKNOWN: Cannot list add-ons
+- **Evidence-only — rated under check 1.4 (Add-on Version Compatibility).** Collect add-on inventory, versions, managed-vs-self-managed status, health, and deprecated in-tree plugin usage as supporting evidence, but do not assign an independent GREEN/AMBER/RED here; the add-on-compatibility rating is owned by check 1.4.
 
 **Key talking point:** EKS does NOT auto-update add-ons when you upgrade the control plane. Clusters upgraded to 1.31 still running vpc-cni from 1.27 is a ticking time bomb.
 
@@ -64,7 +61,4 @@ Assess add-on management maturity, node health monitoring, and cluster insights 
 2. For any non-PASSING insights → get detailed description and recommendation
 
 **Rating:**
-- 🟢 GREEN: Insights reviewed, no ERROR/WARNING, or all addressed
-- 🟡 AMBER: WARNING insights unaddressed
-- 🔴 RED: ERROR insights ignored
-- ⬜ UNKNOWN: Insights API not accessible
+- **Evidence-only — rated under check 1.3 (Upgrade Readiness & Deprecated API Detection).** Collect the cluster insights and their statuses as supporting evidence, but do not assign an independent GREEN/AMBER/RED here; the upgrade-readiness / insights rating is owned by check 1.3.

@@ -27,6 +27,7 @@ Assess VPC CNI configuration, IP capacity, DNS health, and network segmentation.
 - 🟡 AMBER: Adequate IPs now but no prefix delegation and cluster is growing
 - 🔴 RED: <15% IPs available, or past IP exhaustion incidents
 - ⬜ UNKNOWN: Cannot determine subnet sharing with other workloads
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 **Key talking point:** Prefix delegation assigns a /28 (16 IPs) per ENI slot instead of 1 IP — dramatically increases pod density.
 
@@ -53,6 +54,7 @@ Assess VPC CNI configuration, IP capacity, DNS health, and network segmentation.
 - 🟡 AMBER: Adequate replicas but no topology spread, or no NodeLocal DNSCache on 50+ node clusters, or no HPA
 - 🔴 RED: CoreDNS under-provisioned (2 replicas for 50+ nodes with no HPA), or past DNS incidents
 - ⬜ UNKNOWN: Cannot determine if DNS issues have occurred historically
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 ---
 

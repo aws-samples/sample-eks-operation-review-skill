@@ -88,6 +88,7 @@ Use this table to determine the ACTUAL support status. Do NOT guess or use train
 - 🟡 AMBER: WARNING-level insights, or no automated detection tooling
 - �� RED: CRITICAL/ERROR insights, deprecated APIs actively in use
 - ⬜ UNKNOWN: Insights API not accessible
+- **Scoring authority:** this check owns the EKS Cluster Insights / upgrade-readiness signal; check 10.3 defers here and is evidence-only.
 
 ---
 
@@ -107,6 +108,7 @@ Use this table to determine the ACTUAL support status. Do NOT guess or use train
 - 🟡 AMBER: Managed but behind, or mix of managed and self-managed
 - 🔴 RED: Core add-ons self-managed with no version tracking, or health issues present
 - ⬜ UNKNOWN: Cannot list add-ons
+- **Scoring authority:** this check owns add-on version compatibility scoring; check 10.1 defers here and is evidence-only.
 
 **Key talking point:** EKS does NOT auto-update add-ons when you upgrade the control plane. This is the #1 thing customers forget.
 

@@ -65,7 +65,7 @@ Assess observability across three layers: control plane, data plane (nodes), and
 3. Use CloudWatch tools to check for log groups with prefix `/aws/eks/{cluster-name}`
 
 **Rating:**
-- 🟢 GREEN: Log shipper deployed, logs centralized with retention policy, structured logging
+- 🟢 GREEN: Log shipper deployed, logs centralized with retention policy
 - 🟡 AMBER: Log shipper exists but no retention policy, or unstructured logging
 - 🔴 RED: No centralized log collection — teams rely on kubectl logs
 - ⬜ UNKNOWN: Cannot determine log format (structured vs unstructured) without sampling
@@ -85,7 +85,7 @@ Assess observability across three layers: control plane, data plane (nodes), and
 3. Use CloudWatch tools to list alarms with ContainerInsights namespace
 
 **Rating:**
-- 🟢 GREEN: Alerts cover critical scenarios (node, pod, capacity), routed to on-call
+- 🟢 GREEN: Alerts cover critical scenarios (node, pod, capacity)
 - 🟡 AMBER: Some alerts exist but incomplete coverage, or no runbooks linked
 - 🔴 RED: No alerting configured
 - ⬜ UNKNOWN: Cannot determine if alerts have runbooks or if on-call monitors them — suggest user investigate

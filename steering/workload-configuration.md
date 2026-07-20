@@ -19,14 +19,15 @@ Assess workload resilience: resource requests/limits, health probes, disruption 
 2. Count pods with no requests vs total running pods → calculate percentage
 3. List LimitRange resources across all namespaces
 4. List ResourceQuota resources across all namespaces
-5. Get events with reason=OOMKilling (count occurrences — >5 in recent events = AMBER, >20 = RED)
+5. Get events with reason=OOMKilling (count occurrences — thresholds applied in the Rating block below)
 6. List ValidatingWebhookConfigurations and MutatingWebhookConfigurations
 
 **Rating:**
 - 🟢 GREEN: >90% of pods have requests, LimitRange/ResourceQuota in place, admission enforcement
-- 🟡 AMBER: Most pods have requests but no enforcement mechanism, or frequent OOMKills
-- 🔴 RED: Majority of pods missing requests, no LimitRange, no enforcement
+- 🟡 AMBER: Most pods have requests but no enforcement mechanism, or >5 recent OOMKill events
+- 🔴 RED: Majority of pods missing requests, no LimitRange, no enforcement, or >20 recent OOMKill events
 - ⬜ UNKNOWN: Should not happen with live access
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 **Key talking point:** Without resource requests, the scheduler is flying blind. Don't set CPU limits equal to requests — causes unnecessary throttling.
 
@@ -91,6 +92,7 @@ Assess workload resilience: resource requests/limits, health probes, disruption 
 - 🟡 AMBER: Mostly versioned tags but some `:latest`, or ECR without immutability
 - 🔴 RED: `:latest` widely used, or images from untrusted public registries
 - ⬜ UNKNOWN: Cannot determine if tags are mutable without ECR access
+- **Scoring authority:** this check owns ECR image facts (tag immutability, scan-on-push, registry trust); check 8.2 defers here for image scanning/immutability.
 
 ---
 
@@ -120,3 +122,4 @@ Assess workload resilience: resource requests/limits, health probes, disruption 
 - 🔴 RED: Deprecated in-tree plugin, Delete policy on databases, or no backup strategy
 - N/A: No stateful workloads on EKS
 - ⬜ UNKNOWN: Cannot determine if Delete policy is intentional (dev) vs accidental (prod)
+- **Scoring authority:** this check owns deprecated in-tree storage plugin usage and PV/StatefulSet configuration; check 10.1 defers here for the deprecated-in-tree-storage signal.

@@ -8,8 +8,8 @@ After all section checks are complete, generate the EKS Operation Review report.
 Before writing the report, validate consistency:
 
 1. **Build a master list** of all findings with their ratings from sections 01-10
-2. **For each RED item:** confirm it appears in "Critical" or "Important" prioritized actions
-3. **For each AMBER item:** confirm it appears in "Important" or "Quick Wins"
+2. **For each RED item:** confirm it appears in "Critical" (or "Quick Wins" if fixable in < 1 hour)
+3. **For each AMBER item:** confirm it appears in "Important" (or "Quick Wins" if fixable in < 1 hour)
 4. **For the Executive Summary:** only mention ratings that match the master list — do not call something a "critical gap" if it's AMBER, or omit a RED from the summary
 5. **For Prioritized Actions:** every entry must reference the finding ID (e.g., "4.1 — Control Plane Logging")
 
@@ -23,8 +23,8 @@ Before writing the report, validate consistency:
 
 ### Step 2: Calculate Maturity Score
 
-- Count GREEN, AMBER, RED, UNKNOWN
-- Calculate percentages (exclude UNKNOWN from denominator)
+- Count GREEN, AMBER, RED, N/A, UNKNOWN
+- Calculate percentages (exclude both N/A and UNKNOWN from denominator — N/A means the check does not apply to this cluster)
 
 ### Step 3: Write Executive Summary
 

@@ -47,10 +47,12 @@ Assess IAM and RBAC configuration for security and operational excellence — po
 4. List application namespaces (exclude kube-system, kube-public, kube-node-lease, default)
 
 **Rating:**
-- 🟢 GREEN: Namespace-scoped RBAC, cluster-admin limited to 1-2 break-glass bindings, periodic review
+- 🟢 GREEN: Namespace-scoped RBAC, cluster-admin limited to 1-2 break-glass bindings
 - 🟡 AMBER: Some namespace isolation but cluster-admin overused (>3 bindings)
 - 🔴 RED: Developers have cluster-admin in production, wildcard service accounts, no namespace isolation
 - ⬜ UNKNOWN: Cannot determine if RBAC is reviewed periodically — suggest user investigate
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
+- **Scoring authority:** this check owns least-privilege RBAC / cluster-admin scoring; check 2.4 defers here for the cluster-admin signal.
 
 ---
 
@@ -67,10 +69,11 @@ Assess IAM and RBAC configuration for security and operational excellence — po
 2. Describe cluster → `logging.clusterLogging` (check if audit log type is enabled)
 
 **Rating:**
-- 🟢 GREEN: Private endpoint enabled, public either disabled or CIDR-restricted, audit logging on
-- 🟡 AMBER: Public endpoint with CIDR restrictions, or private enabled but audit logging off
-- 🔴 RED: Public endpoint open to `0.0.0.0/0`, or no audit logging
+- 🟢 GREEN: Private endpoint enabled, public either disabled or CIDR-restricted
+- 🟡 AMBER: Public endpoint CIDR-restricted with private access disabled, or private enabled but audit logging off (audit logging is independently owned by check 4.1)
+- 🔴 RED: Public endpoint open to `0.0.0.0/0`
 - ⬜ UNKNOWN: Cannot determine MFA/SSO requirements — suggest user investigate
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 **Key talking point:** An API server open to 0.0.0.0/0 is exposed to the internet. You're relying entirely on authentication.
 

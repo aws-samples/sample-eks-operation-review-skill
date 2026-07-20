@@ -123,6 +123,7 @@ Load `references/report-generation.md` and produce the report following its stru
 | GREEN | Fully implemented — matches EKS best practices |
 | AMBER | Partial or inconsistent — improvement opportunity |
 | RED | Not implemented or significant gap — action needed |
+| N/A | Check does not apply to this cluster (e.g. no stateful workloads) — excluded from scoring |
 | UNKNOWN | Cannot be determined from cluster data — investigate manually |
 
 ### Rules
@@ -154,6 +155,7 @@ Date: [YYYY-MM-DD HH:MM]
 | GREEN | X | X% |
 | AMBER | X | X% |
 | RED | X | X% |
+| N/A | X | -- |
 | UNKNOWN | X | -- |
 
 ## Findings
@@ -181,7 +183,7 @@ Date: [YYYY-MM-DD HH:MM]
 
 1. Ratings must be consistent across the entire report
 2. Prioritized Actions must reference the finding ID (e.g., "4.1 — Control Plane Logging RED")
-3. Every RED must appear in Critical or Important; every AMBER in Important or Quick Wins
+3. Every RED must appear in Critical (or Quick Wins if fixable in < 1 hour); every AMBER in Important (or Quick Wins if fixable in < 1 hour)
 4. Executive Summary must match the findings — do not call something "critical" if it's AMBER
 5. One row per finding in Prioritized Actions — never bundle multiple findings
 

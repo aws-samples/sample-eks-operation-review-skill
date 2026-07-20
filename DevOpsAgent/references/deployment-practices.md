@@ -49,6 +49,7 @@ CI/CD pipeline details (approval gates, post-deployment tests) are not fully det
 - 🟡 AMBER: Pipeline exists but no scanning, or no admission enforcement
 - 🔴 RED: No CI/CD evidence, images from untrusted public registries
 - ⬜ UNKNOWN: Cannot determine full pipeline from cluster state — suggest user investigate
+- **Scoring authority:** ECR scan-on-push and image tag immutability are rated under check 5.4 (Image Tag Hygiene); 8.2 assesses pipeline evidence and admission enforcement.
 
 ---
 
@@ -64,12 +65,14 @@ CI/CD pipeline details (approval gates, post-deployment tests) are not fully det
 1. List Deployments → count those with `lifecycle.preStop` vs without
 2. List Deployments → check `terminationGracePeriodSeconds` (null = default 30s)
 3. List Services → check for `service.beta.kubernetes.io/aws-load-balancer-type` annotation
-4. List Ingresses → check for `alb.ingress.kubernetes.io/target-group-attributes` annotation (deregistration delay should match or exceed `terminationGracePeriodSeconds`)
+4. List Ingresses → check for `alb.ingress.kubernetes.io/target-group-attributes` annotation (`terminationGracePeriodSeconds` should be greater than or equal to the target-group deregistration delay — the pod must stay alive until in-flight connections finish draining)
 
 **Rating:**
 - 🟢 GREEN: preStop hooks on all externally-facing deployments, grace period tuned, LB drain aligned
-- 🟡 AMBER: Some deployments have preStop but not all
-- 🔴 RED: No preStop hooks and experiencing 502s, or grace period too short
+- 🟡 AMBER: Some-but-not-all externally-facing deployments have preStop hooks, OR there are no externally-facing workloads and preStop is absent
+- 🔴 RED: Externally-facing deployments exist (a deployment fronted by a LoadBalancer Service or backed by an Ingress) AND all of them lack preStop hooks, OR `terminationGracePeriodSeconds` is shorter than the target-group deregistration delay
 - ⬜ UNKNOWN: Cannot determine if 502s occur during deployments — suggest user investigate
+- **Externally-facing** = a deployment exposed via a LoadBalancer-type Service or an Ingress. Zero externally-facing deployments is NOT RED (it lands in AMBER when preStop is absent).
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 **Key talking point:** There's a race condition during pod termination. The LB still sends traffic for a few seconds after SIGTERM. A preStop sleep of 5-10s fixes it.

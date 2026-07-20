@@ -85,3 +85,4 @@ This section is only partially automatable. The skill can detect tool presence (
 - 🟡 AMBER: API_AND_CONFIG_MAP (transitional), or RBAC partially in code
 - 🔴 RED: CONFIG_MAP only with manual edits, broad cluster-admin access
 - ⬜ UNKNOWN: Cannot determine if RBAC changes go through PR review — suggest user verify
+- **Scoring authority:** cluster-admin scope / least-privilege RBAC is rated under check 3.2; this check assesses whether access control is defined in code (auth mode, GitOps management).

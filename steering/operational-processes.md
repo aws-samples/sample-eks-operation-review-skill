@@ -88,8 +88,9 @@ This section is mostly NOT automatable from cluster state. The skill checks for 
 5. List PVCs across all namespaces → count
 
 **Rating:**
-- 🟢 GREEN: Backup tool in place, scheduled backups running, restore tested
+- 🟢 GREEN: Backup tool in place, scheduled backups running
 - 🟡 AMBER: Backups exist but never tested, or only PV data backed up
 - 🔴 RED: Stateful workloads with no backup strategy
 - N/A: No stateful workloads and all config is in Git/IaC
 - ⬜ UNKNOWN: Cannot determine if restore has been tested — suggest user investigate
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.

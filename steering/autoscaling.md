@@ -48,7 +48,7 @@ Assess cluster-level autoscaling (nodes) and workload-level autoscaling (pods), 
 5. List VPA resources. If 404/NotFound → VPA not installed, skip. If 403/Forbidden → mark UNKNOWN.
 
 **Rating:**
-- 🟢 GREEN: HPAs on stateless production workloads, min >= 2, tested under load
+- 🟢 GREEN: HPAs on stateless production workloads, min >= 2
 - 🟡 AMBER: HPAs exist but min=1, or some workloads missing HPA
 - 🔴 RED: No HPAs — all workloads at fixed replica count
 - ⬜ UNKNOWN: Cannot determine if HPAs have been load-tested
@@ -74,5 +74,6 @@ Assess cluster-level autoscaling (nodes) and workload-level autoscaling (pods), 
 - 🟡 AMBER: Nodes in multiple AZs but no topology spread constraints
 - 🔴 RED: Single-AZ deployment, or multi-replica services with no AZ spread
 - ⬜ UNKNOWN: Cannot verify actual pod distribution without checking pod-to-node mapping
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 **Key talking point:** Having nodes in 3 AZs doesn't mean pods are spread. Without topology spread constraints, the scheduler may pack all pods into one AZ.
