@@ -19,13 +19,13 @@ Assess IAM and RBAC configuration for security and operational excellence — po
 2. List Pod Identity associations
 3. List ServiceAccounts across all namespaces → filter for IRSA annotation
 4. List node groups → describe first one → get `nodeRole` → get policies for that role
-5. List Secrets across namespaces → check for `AWS_ACCESS_KEY_ID` keys (⚠️ avoid reading Secret values)
-6. List pods → check container env vars for `AWS_ACCESS_KEY_ID`
+5. List Secrets across namespaces using a **metadata/name + type listing only** — do **not** attempt to enumerate secret keys. The API has no keys-only projection (`Table`/`PartialObjectMetadata` responses drop the `data` field entirely), so the port cannot detect key names like `AWS_ACCESS_KEY_ID` and must not try. **Never** issue a raw JSON/API Secrets list (it returns base64-encoded `data` values) and **never** record or echo secret data into the report.
+6. List pods → inspect container and initContainer env var **names only** for credential-shaped names; **never record or echo the values**. The raw API pod spec includes `envFrom`, so also inspect `envFrom` secretRef/configMapRef **names** (names only, never values). Credential-shaped = exact `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` or substring `SECRET`, `TOKEN`, `PASSWORD`, `API_KEY`. Credential values transit any pod-listing API response, so treat them as sensitive and report names only.
 
 **Rating:**
-- 🟢 GREEN: All AWS-accessing pods use IRSA or Pod Identity, node role is minimal, no hardcoded credentials
+- 🟢 GREEN: All AWS-accessing pods use IRSA or Pod Identity, node role is minimal, no credential-shaped env var names detected; Secrets-key detection is unavailable via the API — route Secrets-based credential verification to Investigate Manually
 - 🟡 AMBER: IRSA partially adopted, or node role has some extra permissions
-- 🔴 RED: No IRSA/Pod Identity, node role has broad permissions (S3FullAccess, DynamoDBFullAccess), or hardcoded AWS credentials found
+- 🔴 RED: No IRSA/Pod Identity, node role has broad permissions (S3FullAccess, DynamoDBFullAccess), or hardcoded AWS credentials found — report the pod/secret **location and key/env-var name only**; **never record or echo the credential value**
 - ⬜ UNKNOWN: Cannot determine which pods need AWS access vs which don't
 
 **Key talking point:** Node-level IAM = every pod on that node inherits the same permissions. One compromised pod gets access to everything.

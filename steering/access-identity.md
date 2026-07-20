@@ -19,13 +19,13 @@ Assess IAM and RBAC configuration for security and operational excellence — po
 2. List Pod Identity associations
 3. List ServiceAccounts across all namespaces → filter for IRSA annotation
 4. List node groups → describe first one → get `nodeRole` → get policies for that role
-5. List Secrets across namespaces → check for `AWS_ACCESS_KEY_ID` keys (⚠️ avoid reading Secret values)
-6. List pods → check container env vars for `AWS_ACCESS_KEY_ID`
+5. List Secrets across namespaces → project **key names only** (never values), enriched with namespace/name so findings are attributable: `kubectl get secrets -A -o go-template='{{range .items}}{{.metadata.namespace}}/{{.metadata.name}}: {{range $k,$v := .data}}{{$k}} {{end}}{{"\n"}}{{end}}'` — flag secrets whose key names match the credential-shaped pattern set (exact: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`; substring: `SECRET`, `TOKEN`, `PASSWORD`, `API_KEY`). **Never record raw Secrets output — credential values must never appear in output.**
+6. List pods → detect credential-shaped env var **names only** (never values) across containers, initContainers, and `envFrom` refs: `kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\t"}{range .spec.containers[*].env[*].name}{@}{" "}{end}{range .spec.containers[*].envFrom[*].configMapRef.name}{@}{" "}{end}{range .spec.containers[*].envFrom[*].secretRef.name}{@}{" "}{end}{range .spec.initContainers[*].env[*].name}{@}{" "}{end}{range .spec.initContainers[*].envFrom[*].configMapRef.name}{@}{" "}{end}{range .spec.initContainers[*].envFrom[*].secretRef.name}{@}{" "}{end}{"\n"}{end}' | grep -iE 'SECRET|TOKEN|PASSWORD|API_KEY|AWS_ACCESS|AWS_SECRET|AWS_SESSION'`. Credential-shaped = exact `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` or substring `SECRET`, `TOKEN`, `PASSWORD`, `API_KEY`. Per output line, the tokens after the tab are env var names first, then `envFrom` secretRef/configMapRef names, in command order. Report each finding as `<ns>/<pod> — credential-shaped <env var|secret ref|configMap ref> name found: <name> (value never read)`.
 
 **Rating:**
 - 🟢 GREEN: All AWS-accessing pods use IRSA or Pod Identity, node role is minimal, no hardcoded credentials
 - 🟡 AMBER: IRSA partially adopted, or node role has some extra permissions
-- 🔴 RED: No IRSA/Pod Identity, node role has broad permissions (S3FullAccess, DynamoDBFullAccess), or hardcoded AWS credentials found
+- 🔴 RED: No IRSA/Pod Identity, node role has broad permissions (S3FullAccess, DynamoDBFullAccess), or hardcoded AWS credentials found — report the pod/secret **location and key/env-var name only**; **never record or echo the credential value**
 - ⬜ UNKNOWN: Cannot determine which pods need AWS access vs which don't
 
 **Key talking point:** Node-level IAM = every pod on that node inherits the same permissions. One compromised pod gets access to everything.
