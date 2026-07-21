@@ -12,23 +12,24 @@ CI/CD pipeline details (approval gates, post-deployment tests) are not fully det
 
 **What to check:**
 - Deployment strategies in use (RollingUpdate vs Recreate)
-- maxUnavailable and maxSurge settings (defaults of 25% are risky for replicas <= 4 — e.g., 25% of 2 = 0, meaning no controlled rollout. Recommend maxUnavailable: 0, maxSurge: 1 for small deployments)
+- maxUnavailable and maxSurge settings — evaluate the RESOLVED integer, not the raw percentage. The default 25% maxUnavailable rounds DOWN for small replica counts (25% of 2 = 0, 25% of 3 = 0), which is already safe; the risk is when it resolves to >= 1 (25% of 4 = 1), allowing capacity to drop mid-rollout. Recommend an explicit maxUnavailable: 0, maxSurge: 1 for latency-sensitive workloads so a rollout never reduces ready replicas.
 - Argo Rollouts resources
 - Flagger Canary resources
 - terminationGracePeriodSeconds and preStop hooks
 
 **How to check:**
 1. List Deployments → inspect `spec.strategy.type`, `rollingUpdate.maxUnavailable`, `rollingUpdate.maxSurge`
-2. Flag deployments with replicas <= 4 and default maxUnavailable: 25%
+2. For each deployment, resolve maxUnavailable against the replica count (round the percentage DOWN to an integer). Flag deployments where the resolved maxUnavailable is >= 1 (capacity can drop during a rollout); a resolved value of 0 is safe.
 3. List Rollouts (Argo Rollouts CRD, if exists)
 4. List Canaries (Flagger CRD, if exists)
 5. Inspect Deployments for `terminationGracePeriodSeconds` and `lifecycle.preStop`
 
 **Rating:**
-- 🟢 GREEN: Zero-downtime strategy (maxUnavailable: 0), graceful shutdown configured
-- 🟡 AMBER: Rolling update but default settings, or no progressive delivery
-- 🔴 RED: Deployments cause downtime, no graceful shutdown
+- 🟢 GREEN: Resolved maxUnavailable is 0 (zero-downtime rollout), graceful shutdown configured
+- 🟡 AMBER: Rolling update where resolved maxUnavailable is >= 1, or no progressive delivery
+- 🔴 RED: Recreate strategy on user-facing workloads (full downtime), or no graceful shutdown
 - ⬜ UNKNOWN: Cannot determine rollback speed or process — suggest user investigate
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 ---
 

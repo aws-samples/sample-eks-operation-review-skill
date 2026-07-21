@@ -62,7 +62,7 @@ Assess observability across three layers: control plane, data plane (nodes), and
 **How to check:**
 1. List DaemonSets with Fluent Bit labels across all namespaces
 2. List DaemonSets in `amazon-cloudwatch` namespace
-3. Use CloudWatch tools to check for log groups with prefix `/aws/eks/{cluster-name}`
+3. Use CloudWatch tools to check for **application/workload** log groups under `/aws/containerinsights/{cluster-name}/…` (Container Insights). Note: `/aws/eks/{cluster-name}/cluster` is the CONTROL-PLANE log group, not workload logs — do not use it to assess application logging.
 
 **Rating:**
 - 🟢 GREEN: Log shipper deployed, logs centralized with retention policy

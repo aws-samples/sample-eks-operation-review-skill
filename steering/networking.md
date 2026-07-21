@@ -23,9 +23,9 @@ Assess VPC CNI configuration, IP capacity, DNS health, and network segmentation.
 7. List ENIConfig resources (custom networking indicator)
 
 **Rating:**
-- 🟢 GREEN: >30% IP headroom, prefix delegation or custom networking enabled
+- 🟢 GREEN: >30% IP headroom (skill-defined heuristic — not an AWS-published threshold), prefix delegation or custom networking enabled
 - 🟡 AMBER: Adequate IPs now but no prefix delegation and cluster is growing
-- 🔴 RED: <15% IPs available, or past IP exhaustion incidents
+- 🔴 RED: <15% IPs available (skill-defined heuristic — not an AWS-published threshold), or past IP exhaustion incidents
 - ⬜ UNKNOWN: Cannot determine subnet sharing with other workloads
 - **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
@@ -37,7 +37,7 @@ Assess VPC CNI configuration, IP capacity, DNS health, and network segmentation.
 
 **What to check:**
 - CoreDNS deployment: replica count, resource requests, pod placement
-- Node count (to assess CoreDNS ratio — ~1 replica per 8 nodes, minimum 2)
+- Node count (to assess CoreDNS ratio — ~1 replica per 16 nodes or 256 cores, minimum 2)
 - NodeLocal DNSCache DaemonSet
 - CoreDNS HPA
 - CoreDNS topology spread constraints
@@ -47,13 +47,14 @@ Assess VPC CNI configuration, IP capacity, DNS health, and network segmentation.
 2. List pods with label `k8s-app=kube-dns` → check node placement
 3. Count nodes
 4. List DaemonSets → check for `node-local-dns` or `nodelocaldns` (recommended for clusters with 50+ nodes)
-5. List HPAs in kube-system with label `k8s-app=kube-dns` (if HPA present, CoreDNS can auto-scale so fewer static replicas is acceptable)
+5. Check for CoreDNS autoscaling before flagging "no HPA": the EKS-managed CoreDNS add-on has a built-in `autoScaling` feature (enabled via the add-on `configurationValues`) that scales replicas WITHOUT creating an HPA object. Also list HPAs in kube-system with label `k8s-app=kube-dns`. If either the add-on built-in autoScaling is enabled OR an HPA is present, CoreDNS can auto-scale, so fewer static replicas is acceptable.
 
 **Rating:**
-- 🟢 GREEN: CoreDNS scaled to cluster size (~1 replica per 8 nodes, min 2), spread across AZs, NodeLocal DNSCache on clusters with 50+ nodes
-- 🟡 AMBER: Adequate replicas but no topology spread, or no NodeLocal DNSCache on 50+ node clusters, or no HPA
-- 🔴 RED: CoreDNS under-provisioned (2 replicas for 50+ nodes with no HPA), or past DNS incidents
+- 🟢 GREEN: CoreDNS scaled to cluster size (~1 replica per 16 nodes or 256 cores, min 2) or add-on built-in autoScaling / HPA enabled, spread across AZs, NodeLocal DNSCache on large clusters
+- 🟡 AMBER: Adequate replicas but no topology spread, or no NodeLocal DNSCache on 50+ node clusters, or no autoscaling of any kind (neither the add-on built-in autoScaling nor an HPA)
+- 🔴 RED: CoreDNS under-provisioned (2 replicas for 50+ nodes with no autoscaling — neither built-in autoScaling nor HPA), or past DNS incidents
 - ⬜ UNKNOWN: Cannot determine if DNS issues have occurred historically
+- *Note: the ~1-replica-per-16-nodes (or 256-cores) ratio is the AWS-published CoreDNS autoscaler formula, not a skill-defined value. The "50+ nodes" NodeLocal DNSCache trigger and the >30%/<15% IP-headroom bands, by contrast, are skill-defined heuristics with no AWS-published source.*
 - **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 ---
@@ -61,14 +62,14 @@ Assess VPC CNI configuration, IP capacity, DNS health, and network segmentation.
 ### 6.3 — Network Policies & Segmentation
 
 **What to check:**
-- VPC CNI Network Policy Controller enabled (`ENABLE_NETWORK_POLICY` env var on aws-node)
+- VPC CNI Network Policy Controller enabled (the `aws-network-policy-agent` container runs with `--enable-network-policy=true`, or the vpc-cni add-on `configurationValues` sets `enableNetworkPolicy: "true"`)
 - Calico pods (alternative enforcement engine)
 - NetworkPolicy resources across namespaces
 - Default-deny policies (podSelector: {})
 - Namespaces without any NetworkPolicy
 
 **How to check:**
-1. Read DaemonSet `aws-node` in kube-system → check env var `ENABLE_NETWORK_POLICY`
+1. Read DaemonSet `aws-node` in kube-system → inspect the `aws-network-policy-agent` container for the `--enable-network-policy=true` arg (or check the vpc-cni add-on `configurationValues` for `enableNetworkPolicy: true`). A self-managed Helm install instead sets the `amazon-vpc-cni` ConfigMap key `enable-network-policy-controller: "true"`.
 2. List pods with label `k8s-app=calico-node`
 3. List NetworkPolicies across all namespaces
 4. Inspect NetworkPolicies for default-deny (empty podSelector)

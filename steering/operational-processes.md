@@ -82,7 +82,7 @@ This section is mostly NOT automatable from cluster state. The skill checks for 
 
 **How to check:**
 1. List pods in `velero` namespace
-2. List Backup resources (`backups.velero.io`) and Schedule resources (`schedules.velero.io`)
+2. List Velero Backup resources (`backups.velero.io`) and Schedule resources (`schedules.velero.io`); also list **AWS Backup** plans (e.g. `backup:ListBackupPlans`) to catch EBS/EFS-level backups configured outside the cluster
 3. List VolumeSnapshots across all namespaces
 4. List StatefulSets across all namespaces
 5. List PVCs across all namespaces → count

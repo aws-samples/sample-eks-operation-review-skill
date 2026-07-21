@@ -66,7 +66,8 @@ Assess IAM and RBAC configuration for security and operational excellence — po
 
 **How to check:**
 1. Describe cluster → `resourcesVpcConfig.endpointPublicAccess`, `endpointPrivateAccess`, `publicAccessCidrs`
-2. Describe cluster → `logging.clusterLogging` (check if audit log type is enabled)
+2. Describe cluster → `resourcesVpcConfig.clusterSecurityGroupId`, then describe that security group's inbound rules (e.g. `ec2:DescribeSecurityGroupRules` filtered to the group) → check for overly-broad ingress (0.0.0.0/0 on sensitive ports)
+3. Describe cluster → `logging.clusterLogging` (check if audit log type is enabled)
 
 **Rating:**
 - 🟢 GREEN: Private endpoint enabled, public either disabled or CIDR-restricted

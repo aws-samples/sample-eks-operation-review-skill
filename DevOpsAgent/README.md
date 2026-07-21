@@ -79,6 +79,7 @@ Quick setup:
    - `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`
    - `logs:DescribeLogGroups`
    - `cloudwatch:DescribeAlarms`
+   - `backup:ListBackupPlans`
 
 ## Usage
 
@@ -105,7 +106,7 @@ For a clean single-pass run, specify cluster name and region up front.
 
 ## Live Data / Freshness
 
-The embedded EKS version calendar in `references/cluster-lifecycle.md` was last verified **2026-04-24**. If a documentation-capable MCP server (e.g., AWS Documentation MCP, AWS Knowledge MCP) is connected to your Agent Space, the agent can cross-check version data against live docs.
+The agent determines version support primarily from the live EKS **DescribeClusterVersions** API. The embedded fallback version table in `references/cluster-lifecycle.md` was last verified **2026-07-20** and is used only when the live API is unavailable.
 
 Without live lookup, the agent flags results as potentially stale.
 

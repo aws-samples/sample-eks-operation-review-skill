@@ -200,6 +200,6 @@ before acting on them. See the project's README and LICENSE for full terms.*
 
 ## Live Data Caveat
 
-This skill includes embedded reference tables (EKS version calendar, compatibility data, pre-verified AWS documentation URLs). These may become stale over time. Before rating version currency, cross-check against the official [EKS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) if documentation search is available in your Agent Space.
+This skill determines version support status primarily from the live EKS **DescribeClusterVersions** API. It also includes embedded reference tables (a fallback EKS version table, compatibility data, pre-verified AWS documentation URLs) that may become stale over time; these are used only when the live API is unavailable.
 
-If live documentation lookup is not available, flag results as: "⚠️ Version data based on embedded reference table (last verified 2026-04-24). Verify against official docs."
+If the live API is not available, flag results as: "⚠️ Version data based on embedded fallback table (last verified 2026-07-20). Verify against official docs."
