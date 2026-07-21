@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Skill-7C3AED.svg)](https://claude.ai/claude-code)
 
-A [Claude Code](https://claude.ai/claude-code) skill that performs automated EKS operational excellence assessments. It connects to a live EKS cluster, checks 37 items across 10 operational areas, and produces a rated report with prioritized recommendations.
+A [Claude Code](https://claude.ai/claude-code) skill that performs automated EKS operational excellence assessments. It connects to a live EKS cluster, checks 38 items across 10 operational areas (36 rated + 2 evidence-only), and produces a rated report with prioritized recommendations.
 
 Checks are informed by the [EKS Best Practices Guide](https://docs.aws.amazon.com/eks/latest/best-practices/) and [EKS User Guide](https://docs.aws.amazon.com/eks/latest/userguide/). All operations are **read-only** — the skill does not modify your cluster.
 
@@ -44,10 +44,10 @@ cd sample-eks-operation-review-skill
 claude
 ```
 
-On first launch, Claude Code will prompt you to enable two MCP servers from `.mcp.json`. **Enable both** — they are required for the skill to work:
+On first launch, Claude Code will prompt you to enable two MCP servers from `.mcp.json`. Only the EKS MCP server is **required**; the AWS Documentation MCP server is **optional**:
 
-- `awslabs.eks-mcp-server` — connects to your EKS cluster
-- `awslabs.aws-documentation-mcp-server` — looks up AWS documentation during assessment
+- `awslabs.eks-mcp-server` (**required**) — connects to your EKS cluster
+- `awslabs.aws-documentation-mcp-server` (**optional**) — used for setup and reference lookups; it is *not* called during the assessment (the report generator forbids calling the AWS Documentation MCP during assessment)
 
 Then run:
 
@@ -111,7 +111,7 @@ The default uses the [open-source EKS MCP server](https://github.com/awslabs/mcp
 "awslabs.eks-mcp-server": {
   "command": "uvx",
   "args": [
-    "mcp-proxy-for-aws@latest",
+    "mcp-proxy-for-aws",
     "https://eks-mcp.{region}.api.aws/mcp",
     "--service", "eks-mcp",
     "--profile", "default",
@@ -145,7 +145,7 @@ Update the `env` block for the EKS MCP server in `.mcp.json`:
 <details>
 <summary><strong>Already have MCP servers configured globally?</strong></summary>
 
-Claude Code merges MCP config from global (`~/.claude/settings.json`) and project (`.mcp.json`) levels. If you already have an EKS MCP server configured globally:
+Claude Code merges MCP config from global (`~/.claude.json`) and project (`.mcp.json`) levels. If you already have an EKS MCP server configured globally:
 
 - **Same server name** (`awslabs.eks-mcp-server` in both) — the project config takes precedence. No action needed.
 - **Different server name** (e.g., `eks-mcp` globally) — both servers will run. Disable the duplicate to avoid conflicts.
@@ -266,7 +266,8 @@ Ensure your IAM identity has the permissions listed in [Required Permissions](#r
 ## Project Structure
 
 ```
-.claude/commands/eks-operation-review.md   # Skill entry point
+SKILL.md                         # Skill manifest (name, description, activation)
+.claude/commands/eks-operation-review.md   # Skill entry point / workflow
 CLAUDE.md                        # Instructions for Claude Code
 .mcp.json                        # MCP server configuration
 steering/                        # Per-section check instructions
@@ -282,6 +283,10 @@ steering/                        # Per-section check instructions
   addon-management.md
   report-generation.md
 tools/report_to_html.py          # Markdown → HTML converter
+evals/                           # Skill evaluation harness (evals.json)
+docs/                            # Additional documentation
+DevOpsAgent/                     # AWS DevOps Agent port (SKILL.md, references/, README)
+CHANGELOG.md                     # Release notes
 ```
 
 ## Contributing

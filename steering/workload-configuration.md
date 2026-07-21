@@ -23,7 +23,7 @@ Assess workload resilience: resource requests/limits, health probes, disruption 
 6. List ValidatingWebhookConfigurations and MutatingWebhookConfigurations
 
 **Rating:**
-- 🟢 GREEN: >90% of pods have requests, LimitRange/ResourceQuota in place, admission enforcement
+- 🟢 GREEN: >90% of pods have requests (the 90% coverage bar is a skill-defined heuristic, not an AWS-published threshold), LimitRange/ResourceQuota in place, admission enforcement
 - 🟡 AMBER: Most pods have requests but no enforcement mechanism, or >5 recent OOMKill events
 - 🔴 RED: Majority of pods missing requests, no LimitRange, no enforcement, or >20 recent OOMKill events
 - ⬜ UNKNOWN: Should not happen with live access
@@ -47,7 +47,7 @@ Assess workload resilience: resource requests/limits, health probes, disruption 
 3. List pods not in Running/Succeeded phase → check for CrashLoopBackOff
 
 **Rating:**
-- 🟢 GREEN: >90% of deployments have readiness probes, startup probes on slow-starting apps
+- 🟢 GREEN: >90% of deployments have readiness probes (the 90% coverage bar is a skill-defined heuristic, not an AWS-published threshold), startup probes on slow-starting apps
 - 🟡 AMBER: Readiness probes on most but not all, or no startup probes for JVM apps
 - 🔴 RED: Majority of deployments missing readiness probes
 - ⬜ UNKNOWN: Cannot determine if apps are slow-starting without more context
@@ -122,4 +122,5 @@ Assess workload resilience: resource requests/limits, health probes, disruption 
 - 🔴 RED: Deprecated in-tree plugin, Delete policy on databases, or no backup strategy
 - N/A: No stateful workloads on EKS
 - ⬜ UNKNOWN: Cannot determine if Delete policy is intentional (dev) vs accidental (prod)
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. If N/A applies (no stateful workloads), N/A takes precedence over all colored bands.
 - **Scoring authority:** this check owns deprecated in-tree storage plugin usage and PV/StatefulSet configuration; check 10.1 defers here for the deprecated-in-tree-storage signal.

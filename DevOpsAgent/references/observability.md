@@ -13,7 +13,7 @@ Assess observability across three layers: control plane, data plane (nodes), and
 
 **How to check:**
 1. Describe cluster → `logging.clusterLogging` → check each entry for `enabled: true` and which `types`
-2. Use CloudWatch tools to check log group `/aws/eks/{cluster-name}/cluster` retention (recommend >= 30 days for audit logs; no retention policy = logs kept forever at cost)
+2. Use CloudWatch tools to check log group `/aws/eks/{cluster-name}/cluster` retention (the >= 30-day audit-log recommendation is a skill-defined heuristic, not an AWS-published requirement; no retention policy = logs kept forever at cost)
 
 **Rating:**
 - 🟢 GREEN: All 5 log types enabled with defined retention policy

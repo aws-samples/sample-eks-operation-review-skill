@@ -15,7 +15,7 @@ Call the EKS **DescribeClusterVersions** API to get the authoritative real-time 
 **Fallback method — only when the live API is unavailable:**
 Use the dated table below. In fallback mode, **latest** = the highest `STANDARD_SUPPORT` version *in this table* (not the true current latest), so ratings are relative to the table and may lag reality — note fallback mode in the finding.
 
-> This fallback table was sourced from the EKS upgrade skill's version data on the "as of" date shown in the table header; it goes stale as new EKS versions ship and support windows advance — refresh it periodically against the [official EKS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html). Prefer the DescribeClusterVersions API with `includeAll` set (which also surfaces `UNSUPPORTED` versions) whenever the live API is reachable. If the cluster runs a version **not present** in this fallback table and the API is unavailable, do not guess — rate ⬜ UNKNOWN and note that the version is outside the fallback table.
+> This fallback table was sourced from the EKS upgrade skill's version data on the "as of" date shown in the table header; it goes stale as new EKS versions ship and support windows advance — refresh it periodically against the [official EKS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html). Prefer the DescribeClusterVersions API with `includeAll` set (which also surfaces `UNSUPPORTED` versions) whenever the live API is reachable. If the cluster runs a version **not present** in this fallback table **and not newer than the highest table entry** and the API is unavailable, do not guess — rate ⬜ UNKNOWN and note that the version is outside the fallback table. (A version *newer* than the highest table entry is rated GREEN by the out-of-range guard, not UNKNOWN.)
 
 | Version | Standard Support Until | Extended Support Until | Status (as of 2026-07-20) |
 |---------|----------------------|----------------------|----------------|
@@ -79,9 +79,10 @@ total_extended_cost  = extended_rate × 730
 
 **Rating:**
 - 🟢 GREEN: All nodes within N-1 of control plane, using managed node groups/Karpenter/Auto Mode
-- 🟡 AMBER: Nodes within one minor of the control plane but mixed versions, or self-managed nodes
-- 🔴 RED: Any node more than 2 minors behind the control plane, or no visibility into node versions (this N-2 bound is a skill-defined operational standard — stricter than the upstream kubelet version-skew policy, which permits up to N-3)
+- 🟡 AMBER: Nodes within two minors of the control plane but mixed versions, or self-managed nodes (exactly 2 minors behind lands here — still within the upstream kubelet N-3 skew policy)
+- 🔴 RED: Any node more than 2 minors behind the control plane, or no visibility into node versions (this >N-2 bound is a skill-defined operational standard — stricter than the upstream kubelet version-skew policy, which permits up to N-3)
 - ⬜ UNKNOWN: No nodes found (possible if cluster is new or uses Fargate only)
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 **Red flags:** AL2 OS is past EOL (2026-06-30) and EKS AL2 AMIs ended with Kubernetes 1.32 — migrate to AL2023 or Bottlerocket; self-managed nodes with no automated upgrade path.
 
@@ -104,6 +105,7 @@ total_extended_cost  = extended_rate × 730
 - 🟡 AMBER: WARNING-level insights, or no automated detection tooling
 - 🔴 RED: ERROR insights, deprecated APIs actively in use
 - ⬜ UNKNOWN: Insights API not accessible
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 - **Scoring authority:** this check owns the EKS Cluster Insights / upgrade-readiness signal; check 10.3 defers here and is evidence-only.
 
 ---

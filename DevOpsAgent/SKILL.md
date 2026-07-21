@@ -7,7 +7,7 @@ description: >-
   operational processes, and add-on management. Produces a GREEN/AMBER/RED rated report
   with prioritized recommendations. Activate for any request to audit, review,
   health-check, or score an EKS cluster operational posture, including section-scoped
-  reviews, including current-state add-on and deprecated-API review with no target version. Not for upgrade readiness assessment against a target version, cluster discovery, or architectural design advice.
+  reviews and version currency / current-state add-on and deprecated-API review with no target version. Not for upgrade readiness assessment against a target version, cluster discovery, or architectural design advice.
 ---
 
 # EKS Operation Review
@@ -53,10 +53,10 @@ For a clean single-pass run, specify: cluster name, region (if not default), and
 
 The DevOps Agent must have:
 - **EKS cluster access** via its IAM role — see [EKS access setup](https://docs.aws.amazon.com/devopsagent/latest/userguide/configuring-integrations-and-knowledge-aws-eks-access-setup.html)
-- **AWS API permissions** for: `eks:Describe*`, `eks:List*`, `ec2:DescribeSubnets`, `ec2:DescribeVpcs`, `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`, `logs:DescribeLogGroups`, `cloudwatch:DescribeAlarms`
+- **AWS API permissions** for: `eks:Describe*`, `eks:List*`, `ec2:DescribeSubnets`, `ec2:DescribeVpcs`, `ec2:DescribeSecurityGroupRules`, `ecr:DescribeRepositories`, `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`, `logs:DescribeLogGroups`, `cloudwatch:DescribeAlarms`, `backup:ListBackupPlans`
 - **Kubernetes RBAC access** to list/get Nodes, Pods, Deployments, Services, DaemonSets, Namespaces, and related resources
 
-## Steering File Map
+## Reference File Map
 
 Before executing checks for any section, load the corresponding reference file from `references/`.
 
@@ -99,7 +99,7 @@ Before executing checks for any section, load the corresponding reference file f
 Verify access before starting the assessment:
 
 1. **List clusters** — use EKS ListClusters API. If multiple found and none specified → HARD STOP with list. If one found → proceed with that cluster.
-2. **Describe cluster** — use EKS DescribeCluster API. Report: cluster name, Kubernetes version, platform version, region, status, authentication mode. If the cluster status is not ACTIVE (e.g., UPDATING, CREATING), note the status in the report and proceed with the data available — do NOT HARD STOP on a non-ACTIVE status.
+2. **Describe cluster** — use EKS DescribeCluster API. Report: cluster name, Kubernetes version, platform version, region, status, authentication mode. If the cluster status is not ACTIVE (e.g., UPDATING, CREATING), note the status in the report and proceed with the data available — do NOT HARD STOP on a non-ACTIVE status. Do not surface the AWS account ID in the report — mask or omit it.
 3. **Verify Kubernetes access** — list Nodes via Kubernetes API.
    - Success → proceed
    - Failure → HARD STOP with access error details
@@ -136,7 +136,9 @@ Load `references/report-generation.md` and produce the report following its stru
 
 ## Report Output
 
-### Filename
+Deliver the report **inline in your response** (see report-generation Step 9). The filename below applies only if a workspace is available and you additionally save a copy — inline delivery is primary and always required.
+
+### Filename (for an optional workspace copy)
 
 `EKS-Operation-Review-<cluster-name>-<YYYY-MM-DD>-<HHMM>.md`
 
@@ -161,6 +163,7 @@ Date: [YYYY-MM-DD HH:MM]
 
 ## Findings
 [One table per section with columns: Item | Status | Current State | Recommendation | References]
+[For the evidence-only checks 10.1 and 10.3, use the Status value `Evidence-only (see 1.4)` and `Evidence-only (see 1.3)` respectively — they contribute no count to the Maturity Score.]
 
 ## Prioritized Actions
 

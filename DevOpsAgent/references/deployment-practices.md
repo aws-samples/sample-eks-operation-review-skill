@@ -46,9 +46,9 @@ CI/CD pipeline details (approval gates, post-deployment tests) are not fully det
 3. List running pods → aggregate image registries
 
 **Rating:**
-- 🟢 GREEN: Images scanned in CI, private registry, admission enforcement
-- 🟡 AMBER: Pipeline exists but no scanning, or no admission enforcement
-- 🔴 RED: No CI/CD evidence, images from untrusted public registries
+- 🟢 GREEN: CI/CD pipeline present with admission enforcement (image scan-on-push / tag immutability / registry trust are rated under 5.4)
+- 🟡 AMBER: Pipeline exists but no admission enforcement
+- 🔴 RED: No CI/CD evidence and no admission enforcement (registry trust is rated under 5.4)
 - ⬜ UNKNOWN: Cannot determine full pipeline from cluster state — suggest user investigate
 - **Scoring authority:** ECR scan-on-push and image tag immutability are rated under check 5.4 (Image Tag Hygiene); 8.2 assesses pipeline evidence and admission enforcement.
 

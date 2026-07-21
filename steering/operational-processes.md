@@ -60,7 +60,7 @@ This section is mostly NOT automatable from cluster state. The skill checks for 
 
 **How to check:**
 1. Get events with reason=NodeNotReady
-2. Get events with reason=DeploymentRollback
+2. Get recent Deployment-related events (e.g. rollout/scaling activity). Note: Kubernetes has no dedicated `DeploymentRollback` event reason, so rollback history cannot be reliably reconstructed from events alone — treat any signal here as best-effort and confirm with the user.
 
 **Rating:**
 - ⬜ UNKNOWN: Cannot determine PIR process from cluster state.

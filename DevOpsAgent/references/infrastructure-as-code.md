@@ -45,6 +45,7 @@ This section is only partially automatable. The skill can detect tool presence (
 - 🟡 AMBER: GitOps tool installed but apps out-of-sync, or CI/CD present but no GitOps
 - 🔴 RED: No GitOps or CI/CD tools detected
 - ⬜ UNKNOWN: No GitOps tools found — could still have external CI/CD. Suggest user verify: how do teams deploy workloads?
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 ---
 
@@ -63,6 +64,7 @@ This section is only partially automatable. The skill can detect tool presence (
 - 🟡 AMBER: GitOps present but no self-heal, or some apps out-of-sync
 - 🔴 RED: No drift detection mechanism
 - ⬜ UNKNOWN: No GitOps tools found
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 ---
 
@@ -81,8 +83,8 @@ This section is only partially automatable. The skill can detect tool presence (
 4. Check ClusterRoles/ClusterRoleBindings for labels indicating Helm/ArgoCD management
 
 **Rating:**
-- 🟢 GREEN: API mode with Access Entries, RBAC managed by GitOps, cluster-admin limited
+- 🟢 GREEN: API mode with Access Entries, RBAC managed by GitOps (cluster-admin scope is rated under 3.2)
 - 🟡 AMBER: API_AND_CONFIG_MAP (transitional), or RBAC partially in code
-- 🔴 RED: CONFIG_MAP only with manual edits, broad cluster-admin access
+- 🔴 RED: CONFIG_MAP only with manual edits, RBAC not defined in code (cluster-admin breadth is rated under 3.2)
 - ⬜ UNKNOWN: Cannot determine if RBAC changes go through PR review — suggest user verify
 - **Scoring authority:** cluster-admin scope / least-privilege RBAC is rated under check 3.2; this check assesses whether access control is defined in code (auth mode, GitOps management).

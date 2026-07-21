@@ -95,6 +95,8 @@ def inline_format(text):
     text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _link_sub, text)
     # Bold: **text**
     text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+    # Italic: *text* (after bold, so ** pairs are already converted and cannot be eaten)
+    text = re.sub(r'\*([^*]+?)\*', r'<em>\1</em>', text)
     # Inline code: `text`
     text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
     # RAG emoji badges
@@ -107,8 +109,14 @@ def inline_format(text):
 
 def parse_table(lines):
     """Convert markdown table lines to HTML table."""
-    if len(lines) < 2:
+    if not lines:
         return ""
+    if len(lines) == 1:
+        # Single pipe line with no separator row — render as a one-row table
+        # instead of silently dropping the content.
+        only = [c.strip() for c in lines[0].strip('|').split('|')]
+        cells = ''.join(f'<td>{inline_format(escape(c))}</td>' for c in only)
+        return '<table>\n<tbody>\n<tr>' + cells + '</tr>\n</tbody></table>\n'
     headers = [c.strip() for c in lines[0].strip('|').split('|')]
     rows = []
     for line in lines[2:]:  # skip separator

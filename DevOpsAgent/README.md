@@ -70,6 +70,7 @@ Quick setup:
      --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonAIOpsAssistantPolicy \
      --access-scope type=cluster
    ```
+   This managed access policy grants read-only Kubernetes verbs (get/list/watch) — sufficient for assessment, and it cannot mutate cluster resources.
 
 3. The Agent Space primary account role also needs these AWS API permissions:
    - `eks:Describe*`, `eks:List*`

@@ -27,6 +27,7 @@ Assess IAM and RBAC configuration for security and operational excellence — po
 - 🟡 AMBER: IRSA partially adopted, or node role has some extra permissions
 - 🔴 RED: No IRSA/Pod Identity, node role has broad permissions (S3FullAccess, DynamoDBFullAccess), or hardcoded AWS credentials found — report the pod/secret **location and key/env-var name only**; **never record or echo the credential value**
 - ⬜ UNKNOWN: Cannot determine which pods need AWS access vs which don't
+- **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.
 
 **Key talking point:** Node-level IAM = every pod on that node inherits the same permissions. One compromised pod gets access to everything.
 
@@ -48,7 +49,7 @@ Assess IAM and RBAC configuration for security and operational excellence — po
 
 **Rating:**
 - 🟢 GREEN: Namespace-scoped RBAC, cluster-admin limited to 1-2 break-glass bindings
-- 🟡 AMBER: Some namespace isolation but cluster-admin overused (>3 bindings)
+- 🟡 AMBER: Some namespace isolation but cluster-admin overused (>3 bindings — skill-defined heuristic, not an AWS-published threshold)
 - 🔴 RED: Developers have cluster-admin in production, wildcard service accounts, no namespace isolation
 - ⬜ UNKNOWN: Cannot determine if RBAC is reviewed periodically — suggest user investigate
 - **Evaluation order:** assess RED first; if not RED, assess AMBER; otherwise GREEN. Keeps the bands exhaustive and non-overlapping.

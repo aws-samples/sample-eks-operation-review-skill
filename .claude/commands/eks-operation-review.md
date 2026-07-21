@@ -222,7 +222,7 @@ Date: [YYYY-MM-DD HH:MM]
 | Item | Status | Current State | Recommendation | References |
 |------|--------|---------------|----------------|------------|
 
-[Repeat for all 10 sections]
+[Repeat for all 10 sections. For the evidence-only checks 10.1 and 10.3, use the Status value `Evidence-only (see 1.4)` and `Evidence-only (see 1.3)` respectively -- they contribute no count to the Maturity Score.]
 
 ## Prioritized Actions
 
