@@ -25,7 +25,7 @@
         {"id": "content_addons_green", "text": "All EKS-managed add-ons healthy AND on latest or N-1 version → 1.4 rated GREEN (healthy-but->1-minor-behind is AMBER per 1.4)"},
         {"id": "consistency_red_in_critical", "text": "Every RED finding ID appears in Critical actions (or Quick Wins if fixable in under 1 hour)"},
         {"id": "consistency_amber_in_important_or_quick", "text": "Every AMBER finding ID appears in Important or Quick Wins"},
-        {"id": "consistency_severity_ordering", "text": "Critical actions ordered security-first: 3.3, 3.4, 6.3 appear before 1.1"},
+        {"id": "consistency_severity_ordering", "text": "Among RED items placed in Critical, security findings precede lifecycle findings (e.g., 3.3/3.4/6.3 before 1.1)"},
         {"id": "consistency_exec_summary_matches", "text": "Findings table ratings match Executive Summary mentions"},
         {"id": "consistency_no_fabricated_urls", "text": "All AWS URLs come from the pre-verified reference map"}
       ]

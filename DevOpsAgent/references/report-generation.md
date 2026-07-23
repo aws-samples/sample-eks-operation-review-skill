@@ -42,13 +42,13 @@ One table per section. Every item from the master list must appear.
 ### Step 5: Write Prioritized Actions
 
 Cross-reference against the master list:
-- **Critical (30 days):** All RED items. Column: `Finding | Action | References`
-- **Important (90 days):** All AMBER items. Column: `Finding | Action | References`
+- **Critical (30 days):** All RED items except those fixable in < 1 hour, which may instead go in Quick Wins. Column: `Finding | Action | References`
+- **Important (90 days):** All AMBER items except those fixable in < 1 hour, which may instead go in Quick Wins. Column: `Finding | Action | References`
 - **Quick Wins:** Items (RED or AMBER) fixable in < 1 hour. Column: `Finding | Action | Effort | Impact | References`
 
 Every entry must include the finding ID and name (e.g., "4.1 — Control Plane Logging 🔴").
 
-**One row per finding.** Never bundle multiple findings into a single row (e.g., "2.2/2.3 — GitOps & Drift Detection"). Each finding has its own context, action, and references — collapsing them hides information and breaks the "every RED must appear in Critical" consistency rule. If two findings genuinely share an action, list them on separate rows that point to the same action.
+**One row per finding.** Never bundle multiple findings into a single row (e.g., "2.2/2.3 — GitOps & Drift Detection"). Each finding has its own context, action, and references — collapsing them hides information and breaks the consistency rule that every RED and AMBER must appear in Prioritized Actions. If two findings genuinely share an action, list them on separate rows that point to the same action.
 
 **Ordering within Critical:** List RED items by blast radius category:
 1. Security first — public API endpoint, hardcoded credentials, no PSA/network policies, overly broad RBAC

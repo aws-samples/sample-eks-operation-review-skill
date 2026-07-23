@@ -63,7 +63,7 @@ Before executing checks for any section, load the corresponding reference file f
 | User Request | Reference File(s) to Load |
 |---|---|
 | Full review / assess / audit / health check | ALL files in order: cluster-lifecycle → addon-management, then report-generation |
-| Version currency / lifecycle (current state) | `references/cluster-lifecycle.md` |
+| Version currency / lifecycle / deprecated APIs (current state) | `references/cluster-lifecycle.md` |
 | IRSA / RBAC / access / pod identity / endpoint | `references/access-identity.md` |
 | Logging / metrics / alerting / observability | `references/observability.md` |
 | Resource requests / probes / PDB / image tags / storage | `references/workload-configuration.md` |
@@ -168,10 +168,10 @@ Date: [YYYY-MM-DD HH:MM]
 ## Prioritized Actions
 
 ### Critical (Address within 30 days)
-[All RED items, ordered: security > availability > cost]
+[All RED items except those fixable in < 1 hour (which may instead go in Quick Wins), ordered: security > availability > cost]
 
 ### Important (Address within 90 days)
-[All AMBER items]
+[All AMBER items except those fixable in < 1 hour (which may instead go in Quick Wins)]
 
 ### Quick Wins
 [Items fixable in < 1 hour]
