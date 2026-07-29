@@ -10,12 +10,15 @@ steering/                                  # Per-section check instructions (loa
 tools/report_to_html.py                    # Markdown-to-HTML report converter
 .mcp.json                                  # MCP server configuration
 SKILL.md                                   # Skill metadata for platform auto-triggering
+evals/                                     # Skill evaluation harness (evals.json)
+docs/                                      # Additional documentation
+DevOpsAgent/                               # AWS DevOps Agent port (SKILL.md, references/, README)
 ```
 
 ## MCP Servers
 
 - `awslabs.eks-mcp-server` — queries EKS cluster state (discovery, describe, Kubernetes API)
-- `awslabs.aws-documentation-mcp-server` — ad-hoc AWS doc lookups during assessment
+- `awslabs.aws-documentation-mcp-server` — optional; used for setup/reference lookups only. It is NOT called during an assessment (the report generator uses the pre-verified reference map instead).
 
 ## Running
 

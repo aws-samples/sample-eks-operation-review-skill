@@ -19,7 +19,6 @@ DevOpsAgent/
 │   ├── operational-processes.md
 │   ├── addon-management.md
 │   └── report-generation.md
-├── assets/               # Data files (currently empty — extend as needed)
 └── README.md             # This file
 ```
 
@@ -71,13 +70,16 @@ Quick setup:
      --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonAIOpsAssistantPolicy \
      --access-scope type=cluster
    ```
+   This managed access policy grants read-only Kubernetes access (describe/list-style reads) — sufficient for the core EKS/API checks; CRD-based checks (GitOps, Velero, Karpenter, KEDA/VPA, progressive-delivery, policy engines) require a supplementary read-only ClusterRole granting those CRD groups, otherwise they report UNKNOWN. It cannot mutate cluster resources.
 
 3. The Agent Space primary account role also needs these AWS API permissions:
    - `eks:Describe*`, `eks:List*`
-   - `ec2:DescribeSubnets`, `ec2:DescribeVpcs`
-   - `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`
+   - `ec2:DescribeSubnets`, `ec2:DescribeVpcs`, `ec2:DescribeSecurityGroupRules`
+   - `ecr:DescribeRepositories`
+   - `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`, `iam:GetRolePolicy`
    - `logs:DescribeLogGroups`
    - `cloudwatch:DescribeAlarms`
+   - `backup:ListBackupPlans` (optional)
 
 ## Usage
 
@@ -95,16 +97,16 @@ For a clean single-pass run, specify cluster name and region up front.
 |--------|-------------|--------------|
 | Entry point | `.claude/commands/eks-operation-review.md` | `SKILL.md` (flat folder root) |
 | Check logic | `steering/` directory | `references/` directory |
-| HTML conversion | `tools/report_to_html.py` script | Agent generates HTML inline |
-| Live AWS docs | `awslabs.aws-documentation-mcp-server` MCP | Not bundled; uses embedded reference URLs. Connect a docs MCP at Agent Space level for live lookups |
-| EKS API access | `awslabs.eks-mcp-server` MCP (bundled) | Configured at Agent Space level (IAM role + EKS access entry) |
+| HTML conversion | `tools/report_to_html.py` script | Markdown inline; HTML/other formats only on an explicit follow-up request |
+| Live AWS docs | A documentation MCP server | Not bundled; uses embedded reference URLs. Connect a docs MCP at Agent Space level for live lookups |
+| EKS API access | The EKS MCP server | Configured at Agent Space level (IAM role + EKS access entry) |
 | Interaction model | Interactive (asks user mid-run) | Autonomous with HARD STOP on ambiguity |
 | Tool names | Specific MCP tool names (`list_k8s_resources`, etc.) | Generic capability phrases (EKS APIs, Kubernetes APIs) |
 | Executables | Python scripts allowed | No executables — documents only |
 
 ## Live Data / Freshness
 
-The embedded EKS version calendar in `references/cluster-lifecycle.md` was last verified **2026-04-24**. If a documentation-capable MCP server (e.g., AWS Documentation MCP, AWS Knowledge MCP) is connected to your Agent Space, the agent can cross-check version data against live docs.
+The agent determines version support primarily from the live EKS **DescribeClusterVersions** API. The embedded fallback version table in `references/cluster-lifecycle.md` was last verified **2026-07-24** and is used only when the live API is unavailable.
 
 Without live lookup, the agent flags results as potentially stale.
 
