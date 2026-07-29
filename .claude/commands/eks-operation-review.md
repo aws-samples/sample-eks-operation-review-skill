@@ -7,7 +7,7 @@
 3. **Do NOT hardcode or guess cluster names.** Always discover clusters by listing them first.
 4. **Do NOT retry a failed MCP tool call more than once.** If it fails twice, stop and show troubleshooting steps.
 5. **Always load the relevant steering file before executing checks for that section.**
-6. **Do NOT use the `manage_eks_stacks` MCP tool for cluster discovery or description.** That tool manages CloudFormation stacks, not EKS clusters. Use `aws eks list-clusters` and `aws eks describe-cluster` via Bash for pre-flight, and `list_k8s_resources` for Kubernetes checks.
+6. **Do NOT use the `manage_eks_stacks` MCP tool for cluster discovery or description.** That tool manages CloudFormation stacks, not EKS clusters. Use `aws eks list-clusters` and `aws eks describe-cluster` via Bash for pre-flight, and `list_k8s_resources` for Kubernetes checks. **Carve-out:** check 3.1's credential-name scan intentionally uses raw `kubectl` with name-only projection (`go-template`/`jsonpath`) because it must enumerate Secret key names and env-var names WITHOUT ever retrieving their values — an MCP `list_k8s_resources` call would return full objects including values, which this skill must never fetch. The Step 0 pre-flight `aws eks update-kubeconfig` action enables that `kubectl` access.
 
 ## Steering File Loading
 
@@ -25,7 +25,7 @@ Before executing checks for any section, read the corresponding steering file fr
 | IP / subnet / DNS / CoreDNS / network policy | `steering/networking.md` |
 | Autoscaling / Karpenter / HPA / topology spread | `steering/autoscaling.md` |
 | Deployment / rollout / CI/CD / graceful shutdown | `steering/deployment-practices.md` |
-| Runbook / on-call / backup / DR / Velero | `steering/operational-processes.md` |
+| Runbook / on-call / post-incident / backup / DR / Velero | `steering/operational-processes.md` |
 | Add-on / node monitoring / cluster insights | `steering/addon-management.md` |
 | Generate / write report | `steering/report-generation.md` |
 | IaC / GitOps / ArgoCD / Flux / drift | `steering/infrastructure-as-code.md` |
@@ -48,20 +48,21 @@ This skill assesses your live EKS cluster against 10 areas of operational best p
 | 06 | Networking | IP capacity, CoreDNS health, network policies |
 | 07 | Autoscaling | Cluster autoscaler/Karpenter, HPA, topology spread |
 | 08 | Deployment Practices | Rollout strategy, CI/CD, graceful shutdown |
-| 09 | Operational Processes | Backup/DR, tool presence (Velero, AWS Backup) |
+| 09 | Operational Processes | Runbooks, on-call, post-incident review, backup/DR (Velero, AWS Backup) |
 | 10 | Add-on Management | Managed add-ons, node health monitoring, cluster insights |
 
-~70-75% of items are fully automatable. Items that require human knowledge (runbooks, on-call processes) are marked UNKNOWN with suggestions for what to investigate.
+Roughly 85% of items are fully automatable — all but the ~5 human-knowledge/process items (runbooks, on-call, post-incident review) and the 2 evidence-only checks. Items that require human knowledge are marked UNKNOWN with suggestions for what to investigate.
 
 ## Prerequisites
 
 1. **AWS credentials configured** -- `aws configure` or `~/.aws/credentials` with a profile that has EKS access
 2. **Python 3.10+** and **uv** installed ([Install uv](https://docs.astral.sh/uv/getting-started/installation/)) -- required to run the EKS MCP server
-3. **Required AWS Permissions**:
+3. **kubectl** installed -- required for check 3.1's name-only credential scan; pre-flight configures its kubeconfig via `aws eks update-kubeconfig`
+4. **Required AWS Permissions**:
    - `eks:Describe*`, `eks:List*`
-   - `ec2:DescribeSubnets`, `ec2:DescribeSecurityGroupRules`
+   - `ec2:DescribeSubnets`, `ec2:DescribeVpcs`, `ec2:DescribeSecurityGroupRules`
    - `ecr:DescribeRepositories`
-   - `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`
+   - `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`, `iam:GetRolePolicy`
    - `logs:DescribeLogGroups`
    - `cloudwatch:DescribeAlarms`
    - `backup:ListBackupPlans` (optional)
@@ -125,7 +126,31 @@ From the response, show:
 - AWS account ID
 - Authentication mode
 
-**Action 3 -- Verify MCP connectivity**
+**Action 3 -- Configure kubectl access**
+
+Configure a kubeconfig context for the selected cluster so check 3.1's name-only `kubectl` credential scan works. Use the region from Action 2's describe output.
+
+```
+aws eks update-kubeconfig --name <cluster-name> --region <region>
+```
+
+Then verify kubectl can reach the cluster:
+
+```
+kubectl auth can-i get pods -A
+```
+
+- Success -> kubectl is configured. Proceed.
+- Failure -> STOP. Do NOT retry more than once. Show:
+
+> **Cannot configure kubectl access.** Try these steps:
+> 1. Check that kubectl is installed: `kubectl version --client`
+> 2. Re-run: `aws eks update-kubeconfig --name <cluster-name> --region <region>`
+> 3. Confirm your identity has an EKS access entry / RBAC binding on the cluster: `aws sts get-caller-identity`
+
+Wait for the user to resolve the issue.
+
+**Action 4 -- Verify MCP connectivity**
 
 Call one MCP tool to confirm the EKS MCP server works (e.g., list Nodes):
 
@@ -138,12 +163,12 @@ list_k8s_resources(cluster_name="<cluster-name>", kind="Node", api_version="v1")
 
 > **The EKS MCP server isn't responding.** Try these steps:
 > 1. Check that Python 3.10+ and uv are installed: `uv --version`
-> 2. Test the MCP server: `uvx awslabs.eks-mcp-server@latest`
+> 2. Test the MCP server: `uvx awslabs.eks-mcp-server@0.1.28`
 > 3. Verify AWS_PROFILE and AWS_REGION in `.mcp.json`
 
 Wait for the user to resolve the issue.
 
-**Action 4 -- Confirm**
+**Action 5 -- Confirm**
 
 Ask: *"Ready to start the assessment on [cluster-name] (v[version])?"*
 
@@ -156,7 +181,7 @@ Read each steering file in section order using the Read tool. For each section:
 2. Execute the checks described in it
 3. Rate each item using the rubric below
 
-**Error recovery:** If a section fails entirely (MCP server unreachable, permissions denied for all checks in that section, or repeated timeouts), mark all items in that section as UNKNOWN with a note explaining the failure reason, then proceed to the next section. Do not let one failed section block the rest of the assessment.
+**Error recovery:** If a section fails entirely (MCP server unreachable, permissions denied for all checks in that section, or repeated timeouts), mark all items in that section as UNKNOWN with a note explaining the failure reason, then proceed to the next section. Do not let one failed section block the rest of the assessment. Exception: the evidence-only checks 10.1 and 10.3 never receive a rating (including UNKNOWN); if their evidence is unavailable, keep their Evidence-only status and note the missing evidence under their owning checks (1.4 / 5.5 / 1.3).
 
 ### Step 11: Generate Report
 
@@ -172,12 +197,14 @@ Read `steering/report-generation.md` and produce the report.
 | AMBER | Partial or inconsistent -- improvement opportunity |
 | RED | Not implemented or significant gap -- action needed |
 | N/A | Check does not apply to this cluster (e.g. no stateful workloads) -- excluded from scoring |
-| UNKNOWN | Cannot be determined from cluster data -- investigate manually |
+| UNKNOWN | Cannot be determined from cluster data -- investigate manually -- excluded from scoring |
 
 ### Rules
 
 - Only rate based on what was actually observed -- never assume
-- If a check fails or returns no data, mark UNKNOWN
+- If a check fails or returns no data, mark the affected signal UNKNOWN per the access-denied (403) handling rule below (a total failure of the whole section still maps to all-UNKNOWN per the Error recovery paragraph above; a single forbidden read follows the floor-preserving logic). Exception: the evidence-only checks 10.1 and 10.3 are never rated (including UNKNOWN) even if they individually fail or return no data; keep their Evidence-only status and note the missing evidence under their owning checks (1.4 / 5.5 / 1.3).
+- **Access-denied (403) handling (floor-preserving):** When a check's data-gathering read returns 403/Forbidden: (1) mark only that specific signal UNKNOWN -- never treat a forbidden read as "resource absent" or zero. (2) Still evaluate every signal that was read successfully, RED-first then AMBER. (3) Confirmed floor: if a successfully-read signal independently triggers RED or AMBER, the check keeps that rating -- a forbidden read of a different signal can only make the true state worse, never better, so it never downgrades a confirmed RED/AMBER to UNKNOWN. (4) No unearned GREEN: GREEN requires all of its preconditions confirmed by successful reads; an unconfirmable "good" signal caps the check at AMBER (with a "could not verify X" note) when the other signals are GREEN-worthy, or UNKNOWN when nothing is confirmed -- never GREEN. (5) Rate the whole check UNKNOWN only when no successfully-read signal yields RED or AMBER AND the forbidden read was the sole remaining discriminator.
+- **UNKNOWN-band discipline:** A check may be rated UNKNOWN only via a decidable trigger (a specific read returned 403, or a specific signal is genuinely unavailable from the API). For a check that HAS an observable partition, permanently-true unobservable questions ("was it tested?", "did issues occur historically?", "is it reviewed periodically?") are never UNKNOWN-band triggers -- they belong under "Items to Investigate Manually", and an always-true UNKNOWN clause must not compete with that check's observable GREEN/AMBER/RED bands (a check with real observable bands cannot ALSO carry an always-true UNKNOWN escape). **Carve-out for signal-less process checks:** a small set of checks -- 9.1 (runbooks), 9.2 (on-call), 9.3 (post-incident) -- are inherently process/human-knowledge checks with no observable cluster signal at all; these are legitimately rated UNKNOWN as their normal, by-design outcome and routed to Items to Investigate Manually. The no-always-true-clause prohibition above bites only where a check has an observable partition; it does NOT invalidate these signal-less process checks, which have no observable band to compete with.
 - Prioritize by blast radius: security > availability > cost
 - Every RED finding must have a specific, actionable recommendation
 
@@ -191,6 +218,7 @@ Read `steering/report-generation.md` and produce the report.
 2. **Prioritized Actions must reference the finding ID.** Write "4.1 -- Control Plane Logging RED" not just "Enable logging".
 3. **Every RED must appear in Critical (or Quick Wins if <1hr). Every AMBER must appear in Important (or Quick Wins if <1hr).** Nothing rated RED/AMBER can be missing from Prioritized Actions.
 4. **Executive Summary must match the findings.** Do not call something a "critical gap" if it's AMBER, or skip a RED item.
+5. **One row per finding in Prioritized Actions -- never bundle multiple findings into one row.**
 
 ### File Output
 
@@ -222,7 +250,7 @@ Date: [YYYY-MM-DD HH:MM]
 | Item | Status | Current State | Recommendation | References |
 |------|--------|---------------|----------------|------------|
 
-[Repeat for all 10 sections. For the evidence-only checks 10.1 and 10.3, use the Status value `Evidence-only (see 1.4)` and `Evidence-only (see 1.3)` respectively -- they contribute no count to the Maturity Score.]
+[Repeat for all 10 sections. For the evidence-only checks 10.1 and 10.3, use the Status value `Evidence-only (see 1.4, 5.5)` and `Evidence-only (see 1.3)` respectively -- they contribute no count to the Maturity Score.]
 
 ## Prioritized Actions
 
@@ -233,6 +261,7 @@ Date: [YYYY-MM-DD HH:MM]
 | 1 | [X.X -- Item Name] RED | [specific action] | [links] |
 
 ### Important (Address within 90 days)
+<!-- All AMBER items except those fixable in < 1 hour, which may instead go in Quick Wins. -->
 | # | Finding | Action | References |
 |---|---------|--------|------------|
 | 1 | [X.X -- Item Name] AMBER | [specific action] | [links] |
@@ -240,10 +269,10 @@ Date: [YYYY-MM-DD HH:MM]
 ### Quick Wins
 | # | Finding | Action | Effort | Impact | References |
 |---|---------|--------|--------|--------|------------|
-| 1 | [X.X -- Item Name] | [action] | [estimate] | [what improves] | [links] |
+| 1 | [X.X -- Item Name] RED/AMBER | [action] | [estimate] | [what improves] | [links] |
 
 ## Items to Investigate Manually
-[UNKNOWN items with specific questions to answer]
+[All UNKNOWN items with specific questions to answer, PLUS any "could-not-verify" caveats from checks capped at AMBER-with-note under the access-denied (403) rule, PLUS manual-review questions surfaced by any check regardless of its rating]
 
 ## AWS Reference Links
 [All links grouped by topic]
@@ -251,6 +280,8 @@ Date: [YYYY-MM-DD HH:MM]
 ---
 
 *This report was generated by a Claude Code skill provided as sample code for educational and demonstration purposes only. Findings should be reviewed and validated before acting on them. See the project's README and LICENSE for full terms.*
+
+*Before sharing this report outside your organization, mask or omit the AWS account ID and any cluster ARNs.*
 ```
 
 ### AWS References

@@ -53,7 +53,7 @@ For a clean single-pass run, specify: cluster name, region (if not default), and
 
 The DevOps Agent must have:
 - **EKS cluster access** via its IAM role — see [EKS access setup](https://docs.aws.amazon.com/devopsagent/latest/userguide/configuring-integrations-and-knowledge-aws-eks-access-setup.html)
-- **AWS API permissions** for: `eks:Describe*`, `eks:List*`, `ec2:DescribeSubnets`, `ec2:DescribeVpcs`, `ec2:DescribeSecurityGroupRules`, `ecr:DescribeRepositories`, `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`, `logs:DescribeLogGroups`, `cloudwatch:DescribeAlarms`, `backup:ListBackupPlans`
+- **AWS API permissions** for: `eks:Describe*`, `eks:List*`, `ec2:DescribeSubnets`, `ec2:DescribeVpcs`, `ec2:DescribeSecurityGroupRules`, `ecr:DescribeRepositories`, `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`, `iam:GetRolePolicy`, `logs:DescribeLogGroups`, `cloudwatch:DescribeAlarms`, `backup:ListBackupPlans` (optional)
 - **Kubernetes RBAC access** to list/get Nodes, Pods, Deployments, Services, DaemonSets, Namespaces, and related resources
 
 ## Reference File Map
@@ -70,7 +70,7 @@ Before executing checks for any section, load the corresponding reference file f
 | IP / subnet / DNS / CoreDNS / network policy | `references/networking.md` |
 | Autoscaling / Karpenter / HPA / topology spread | `references/autoscaling.md` |
 | Deployment / rollout / CI/CD / graceful shutdown | `references/deployment-practices.md` |
-| Runbook / on-call / backup / DR / Velero | `references/operational-processes.md` |
+| Runbook / on-call / post-incident / backup / DR / Velero | `references/operational-processes.md` |
 | Add-on / node monitoring / cluster insights | `references/addon-management.md` |
 | Deliver report | `references/report-generation.md` |
 | IaC / GitOps / ArgoCD / Flux / drift | `references/infrastructure-as-code.md` |
@@ -87,10 +87,10 @@ Before executing checks for any section, load the corresponding reference file f
 | 06 | Networking | IP capacity, CoreDNS health, network policies |
 | 07 | Autoscaling | Cluster autoscaler/Karpenter, HPA, topology spread |
 | 08 | Deployment Practices | Rollout strategy, CI/CD, graceful shutdown |
-| 09 | Operational Processes | Backup/DR, tool presence (Velero, AWS Backup) |
+| 09 | Operational Processes | Runbooks, on-call, post-incident review, backup/DR (Velero, AWS Backup) |
 | 10 | Add-on Management | Managed add-ons, node health monitoring, cluster insights |
 
-~70-75% of items are fully automatable. Items requiring human knowledge (runbooks, on-call processes) are marked UNKNOWN with suggestions for investigation.
+Roughly 85% of items are fully automatable — all but the ~5 human-knowledge/process items (runbooks, on-call, post-incident review) and the 2 evidence-only checks. Items requiring human knowledge are marked UNKNOWN with suggestions for investigation.
 
 ## Assessment Workflow
 
@@ -111,7 +111,7 @@ Load each reference file in section order. For each section:
 2. Execute the checks described in it using available EKS and Kubernetes APIs
 3. Rate each item using the rubric below
 
-**Error recovery:** If a section fails entirely (API unreachable, permissions denied for all checks), mark all items as UNKNOWN with failure reason, then proceed to next section. Do not let one failed section block the entire assessment.
+**Error recovery:** If a section fails entirely (API unreachable, permissions denied for all checks), mark all items as UNKNOWN with failure reason, then proceed to next section. Do not let one failed section block the entire assessment. Exception: the evidence-only checks 10.1 and 10.3 never receive a rating (including UNKNOWN); if their evidence is unavailable, keep their Evidence-only status and note the missing evidence under their owning checks (1.4 / 5.5 / 1.3).
 
 ### Step 11: Generate Report
 
@@ -125,12 +125,14 @@ Load `references/report-generation.md` and produce the report following its stru
 | AMBER | Partial or inconsistent — improvement opportunity |
 | RED | Not implemented or significant gap — action needed |
 | N/A | Check does not apply to this cluster (e.g. no stateful workloads) — excluded from scoring |
-| UNKNOWN | Cannot be determined from cluster data — investigate manually |
+| UNKNOWN | Cannot be determined from cluster data — investigate manually — excluded from scoring |
 
 ### Rules
 
 - Only rate based on what was actually observed — never assume
-- If a check fails or returns no data, mark UNKNOWN
+- If a check fails or returns no data, mark the affected signal UNKNOWN per the access-denied (403) handling rule below (a total failure of the whole section still maps to all-UNKNOWN per the Error recovery paragraph above; a single forbidden read follows the floor-preserving logic). Exception: the evidence-only checks 10.1 and 10.3 are never rated (including UNKNOWN) even if they individually fail or return no data; keep their Evidence-only status and note the missing evidence under their owning checks (1.4 / 5.5 / 1.3).
+- **Access-denied (403) handling (floor-preserving):** When a check's data-gathering read returns 403/Forbidden: (1) mark only that specific signal UNKNOWN — never treat a forbidden read as "resource absent" or zero. (2) Still evaluate every signal that was read successfully, RED-first then AMBER. (3) Confirmed floor: if a successfully-read signal independently triggers RED or AMBER, the check keeps that rating — a forbidden read of a different signal can only make the true state worse, never better, so it never downgrades a confirmed RED/AMBER to UNKNOWN. (4) No unearned GREEN: GREEN requires all of its preconditions confirmed by successful reads; an unconfirmable "good" signal caps the check at AMBER (with a "could not verify X" note) when the other signals are GREEN-worthy, or UNKNOWN when nothing is confirmed — never GREEN. (5) Rate the whole check UNKNOWN only when no successfully-read signal yields RED or AMBER AND the forbidden read was the sole remaining discriminator.
+- **UNKNOWN-band discipline:** A check may be rated UNKNOWN only via a decidable trigger (a specific read returned 403, or a specific signal is genuinely unavailable from the API). For a check that HAS an observable partition, permanently-true unobservable questions ("was it tested?", "did issues occur historically?", "is it reviewed periodically?") are never UNKNOWN-band triggers — they belong under "Items to Investigate Manually", and an always-true UNKNOWN clause must not compete with that check's observable GREEN/AMBER/RED bands (a check with real observable bands cannot ALSO carry an always-true UNKNOWN escape). **Carve-out for signal-less process checks:** a small set of checks — 9.1 (runbooks), 9.2 (on-call), 9.3 (post-incident) — are inherently process/human-knowledge checks with no observable cluster signal at all; these are legitimately rated UNKNOWN as their normal, by-design outcome and routed to Items to Investigate Manually. The no-always-true-clause prohibition above bites only where a check has an observable partition; it does NOT invalidate these signal-less process checks, which have no observable band to compete with.
 - Prioritize by blast radius: security > availability > cost
 - Every RED finding must have a specific, actionable recommendation
 
@@ -163,7 +165,7 @@ Date: [YYYY-MM-DD HH:MM]
 
 ## Findings
 [One table per section with columns: Item | Status | Current State | Recommendation | References]
-[For the evidence-only checks 10.1 and 10.3, use the Status value `Evidence-only (see 1.4)` and `Evidence-only (see 1.3)` respectively — they contribute no count to the Maturity Score.]
+[For the evidence-only checks 10.1 and 10.3, use the Status value `Evidence-only (see 1.4, 5.5)` and `Evidence-only (see 1.3)` respectively — they contribute no count to the Maturity Score.]
 
 ## Prioritized Actions
 
@@ -177,7 +179,7 @@ Date: [YYYY-MM-DD HH:MM]
 [Items fixable in < 1 hour]
 
 ## Items to Investigate Manually
-[UNKNOWN items with specific questions]
+[All UNKNOWN items with specific questions, PLUS any "could-not-verify" caveats from checks capped at AMBER-with-note under the access-denied (403) rule, PLUS manual-review questions surfaced by any check regardless of its rating]
 
 ## AWS Reference Links
 [Grouped by topic — use pre-verified URLs from references/report-generation.md]
@@ -197,13 +199,14 @@ Append at the end:
 
 ```markdown
 ---
-*This report was generated by an AWS DevOps Agent skill provided as sample code for
-educational and demonstration purposes only. Findings should be reviewed and validated
-before acting on them. See the project's README and LICENSE for full terms.*
+
+*This report was generated by an AWS DevOps Agent skill provided as sample code for educational and demonstration purposes only. Findings should be reviewed and validated before acting on them. See the project's README for full terms and licensing information.*
+
+*Before sharing this report outside your organization, mask or omit the AWS account ID and any cluster ARNs.*
 ```
 
 ## Live Data Caveat
 
 This skill determines version support status primarily from the live EKS **DescribeClusterVersions** API. It also includes embedded reference tables (a fallback EKS version table, compatibility data, pre-verified AWS documentation URLs) that may become stale over time; these are used only when the live API is unavailable.
 
-If the live API is not available, flag results as: "⚠️ Version data based on embedded fallback table (last verified 2026-07-20). Verify against official docs."
+If the live API is not available, flag results as: "⚠️ Version data based on embedded fallback table (last verified 2026-07-24). Verify against official docs."
