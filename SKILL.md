@@ -21,4 +21,5 @@ Read and follow `.claude/commands/eks-operation-review.md` — it contains the f
 
 - AWS credentials with EKS read access
 - Python 3.10+ and uv installed
+- kubectl installed — required for check 3.1's name-only credential scan; pre-flight configures its kubeconfig via `aws eks update-kubeconfig`
 - MCP servers configured in `.mcp.json`

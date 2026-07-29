@@ -34,6 +34,7 @@ Checks are informed by the [EKS Best Practices Guide](https://docs.aws.amazon.co
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
 - [Python 3.10+](https://www.python.org/) and [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) installed — required for check 3.1's name-only credential scan; pre-flight configures its kubeconfig via `aws eks update-kubeconfig`
 - AWS credentials configured — `aws sts get-caller-identity` should succeed
 
 ### Quick Start
@@ -72,7 +73,7 @@ The skill discovers your EKS clusters, asks you to pick one, and walks you throu
 | 09 | Operational Processes | Backup / DR, runbooks, on-call |
 | 10 | Add-on Management | Managed add-ons, node health monitoring, cluster insights |
 
-~70–75% of items are fully automatable. Items that require human knowledge (runbooks, on-call processes) are marked UNKNOWN with suggestions for what to investigate.
+Roughly 85% of items are fully automatable — all but the ~5 human-knowledge/process items (runbooks, on-call, post-incident review) and the 2 evidence-only checks. Items that require human knowledge are marked UNKNOWN with suggestions for what to investigate.
 
 ## Output
 
@@ -80,8 +81,8 @@ Reports are generated in the workspace root:
 
 | Format | Filename |
 |--------|----------|
-| Markdown | `EKS-Operation-Review-<cluster>-<date>.md` |
-| HTML (optional) | `EKS-Operation-Review-<cluster>-<date>.html` |
+| Markdown | `EKS-Operation-Review-<cluster-name>-<YYYY-MM-DD>-<HHMM>.md` |
+| HTML (optional) | `EKS-Operation-Review-<cluster-name>-<YYYY-MM-DD>-<HHMM>.html` |
 
 Each report includes an executive summary, maturity score, per-section findings table, prioritized actions (Critical / Important / Quick Wins), and AWS documentation references.
 
@@ -156,7 +157,7 @@ Claude Code merges MCP config from global (`~/.claude.json`) and project (`.mcp.
 
 ### AWS IAM
 
-Replace `<region>` and `<account-id>` with your values. The scoped statements grant per-resource-type reads (cluster, node group, add-on, access entry, ECR repository). The final `"*"` statement covers two kinds of actions: ones that genuinely do not support resource-level permissions (`eks:ListClusters`, `eks:DescribeAddonVersions`, `eks:DescribeClusterVersions`, the `ec2:*` and `logs:*` reads, and `backup:ListBackupPlans`), and a few that *do* support resource ARNs (`iam:ListAttachedRolePolicies`/`iam:ListRolePolicies` → `role`, `iam:GetPolicy`/`iam:GetPolicyVersion` → `policy`, `cloudwatch:DescribeAlarms` → `alarm`) but are left at `"*"` for operational simplicity, since the specific roles, policies, and alarms are not known at policy-creation time — see the [AWS service authorization reference](https://docs.aws.amazon.com/service-authorization/latest/reference/reference_policies_actions-resources-contextkeys.html).
+Replace `<region>` and `<account-id>` with your values. The scoped statements grant per-resource-type reads (cluster, node group, add-on, access entry, ECR repository). The final `"*"` statement covers two kinds of actions: ones that genuinely do not support resource-level permissions (`eks:ListClusters`, `eks:DescribeAddonVersions`, `eks:DescribeClusterVersions`, the `ec2:*` and `logs:*` reads, and `backup:ListBackupPlans`), and a few that *do* support resource ARNs (`iam:ListAttachedRolePolicies`/`iam:ListRolePolicies`/`iam:GetRolePolicy` → `role`, `cloudwatch:DescribeAlarms` → `alarm`) but are left at `"*"` for operational simplicity, since the specific roles and alarms are not known at policy-creation time. `iam:GetPolicy`/`iam:GetPolicyVersion` (→ `policy`) are included precautionarily and are not required by any current rubric check — check 3.1 evaluates attached managed policies by name and reads only inline policy documents (via `iam:GetRolePolicy`) — see the [AWS service authorization reference](https://docs.aws.amazon.com/service-authorization/latest/reference/reference_policies_actions-resources-contextkeys.html).
 
 ```json
 {
@@ -212,6 +213,7 @@ Replace `<region>` and `<account-id>` with your values. The scoped statements gr
         "ec2:DescribeSecurityGroupRules",
         "iam:ListAttachedRolePolicies",
         "iam:ListRolePolicies",
+        "iam:GetRolePolicy",
         "iam:GetPolicy",
         "iam:GetPolicyVersion",
         "logs:DescribeLogGroups",
