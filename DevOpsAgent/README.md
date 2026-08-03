@@ -144,13 +144,78 @@ committed once and fanned out.
 
 ### Step 3: AWS API permissions
 
-The Agent Space primary account role also needs these AWS API permissions:
+Steps 1–2 grant access to the Kubernetes API. The review also calls AWS APIs directly
+(describing the cluster, node groups, add-ons, VPC, IAM roles, logging, and alarms), so
+the same Agent Space role needs IAM permissions for those calls.
 
-- `eks:Describe*`, `eks:List*`
-- `ec2:DescribeSubnets`, `ec2:DescribeVpcs`
-- `iam:ListAttachedRolePolicies`, `iam:ListRolePolicies`
-- `logs:DescribeLogGroups`
-- `cloudwatch:DescribeAlarms`
+1. Find the role: in the DevOps Agent console, open your Agent Space →
+   **Capabilities → Cloud → Primary source → Edit** and note the **Role Name**
+   (the same role used in Step 1).
+
+2. Check what it already has — the Agent Space setup typically attaches a read-only
+   policy that may already cover these actions:
+
+   ```
+   aws iam list-attached-role-policies --role-name <AGENT_SPACE_ROLE_NAME>
+   ```
+
+3. If not covered, save the following as `eks-operation-review-aws-apis.json`
+   (replace `<region>` and `<account-id>`; the second statement uses `"*"` because
+   those actions do not support resource-level permissions):
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Sid": "EKSReadScoped",
+         "Effect": "Allow",
+         "Action": [
+           "eks:DescribeCluster",
+           "eks:ListNodegroups",
+           "eks:DescribeNodegroup",
+           "eks:ListAddons",
+           "eks:DescribeAddon",
+           "eks:DescribeAddonVersions",
+           "eks:ListInsights",
+           "eks:DescribeInsight",
+           "eks:ListAccessEntries",
+           "eks:DescribeAccessEntry",
+           "eks:ListPodIdentityAssociations"
+         ],
+         "Resource": "arn:aws:eks:<region>:<account-id>:cluster/*"
+       },
+       {
+         "Sid": "AccountLevelReads",
+         "Effect": "Allow",
+         "Action": [
+           "eks:ListClusters",
+           "ec2:DescribeSubnets",
+           "ec2:DescribeVpcs",
+           "iam:ListAttachedRolePolicies",
+           "iam:ListRolePolicies",
+           "iam:GetPolicy",
+           "iam:GetPolicyVersion",
+           "logs:DescribeLogGroups",
+           "cloudwatch:DescribeAlarms"
+         ],
+         "Resource": "*"
+       }
+     ]
+   }
+   ```
+
+4. Attach it to the role:
+
+   ```
+   aws iam put-role-policy \
+     --role-name <AGENT_SPACE_ROLE_NAME> \
+     --policy-name eks-operation-review-aws-apis \
+     --policy-document file://eks-operation-review-aws-apis.json
+   ```
+
+Checks that hit a missing AWS API permission are marked UNKNOWN with the denied action
+in the failure reason — add that action here and re-run.
 
 ## Usage
 
