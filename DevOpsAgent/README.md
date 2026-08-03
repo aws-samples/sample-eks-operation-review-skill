@@ -143,7 +143,12 @@ contains no IAM ARNs, so the same file works unchanged in every cluster.
      apiGroup: rbac.authorization.k8s.io
    ```
 
+   Unlike the AWS CLI commands above, `kubectl` does not take a cluster or region flag —
+   it applies to whatever cluster your current kubeconfig context points at. Point it at
+   the target cluster first:
+
    ```
+   aws eks update-kubeconfig --name <CLUSTER> --region <REGION>
    kubectl apply -f eks-operation-reviewer-rbac.yaml
    ```
 
