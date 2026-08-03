@@ -59,7 +59,18 @@ beyond the default setup — follow both steps below.
 ### Step 1: Create the access entry
 
 Ensure the cluster authentication mode includes **EKS API** (`API` or
-`API_AND_CONFIG_MAP`), then create an access entry for the DevOps Agent's IAM role:
+`API_AND_CONFIG_MAP`), then create an access entry for the DevOps Agent's IAM role.
+
+In all commands below, replace:
+
+- `<CLUSTER>` — your EKS cluster name
+- `<REGION>` — the cluster's AWS region
+- `<DEVOPS_AGENT_ROLE_ARN>` — the Agent Space IAM role ARN, e.g.
+  `arn:aws:iam::111122223333:role/service-role/DevOpsAgentRole-AgentSpace-abc123`
+  (find it in the DevOps Agent console under **Agent Space → Capabilities → Cloud →
+  Primary source → Edit**)
+
+**If the role has no access entry yet** (a fresh setup), run both commands:
 
    ```
    aws eks create-access-entry \
@@ -77,8 +88,17 @@ Ensure the cluster authentication mode includes **EKS API** (`API` or
      --access-scope type=cluster
    ```
 
-   If the access entry already exists, add the group with
-   `aws eks update-access-entry --kubernetes-groups eks-operation-reviewers ...` instead.
+**If the access entry already exists** (e.g. created earlier via the EKS console, which
+does not add Kubernetes groups), `create-access-entry` will fail with
+`ResourceInUseException`. Add the group to the existing entry instead:
+
+   ```
+   aws eks update-access-entry \
+     --cluster-name <CLUSTER> \
+     --region <REGION> \
+     --kubernetes-groups eks-operation-reviewers \
+     --principal-arn <DEVOPS_AGENT_ROLE_ARN>
+   ```
 
 ### Step 2: Grant review read permissions
 
@@ -139,8 +159,17 @@ contains no IAM ARNs, so the same file works unchanged in every cluster.
      --query 'accessEntry.kubernetesGroups'
    ```
 
-   Expected output: `["eks-operation-reviewers"]`. If it shows `[]`, run the
-   `update-access-entry` command from Step 1.
+   Expected output: `["eks-operation-reviewers"]`. If it shows `[]`, the access entry is
+   not in the group, so the ClusterRoleBinding applies to nobody. Fix it by adding the
+   group, then re-run the check above:
+
+   ```
+   aws eks update-access-entry \
+     --cluster-name <CLUSTER> \
+     --region <REGION> \
+     --kubernetes-groups eks-operation-reviewers \
+     --principal-arn <DEVOPS_AGENT_ROLE_ARN>
+   ```
 
    Then confirm the binding grants the reads (these test the RBAC objects only — they
    pass regardless of the access entry, so always check the group above too):
