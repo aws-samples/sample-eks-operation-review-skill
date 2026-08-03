@@ -129,6 +129,7 @@ Load `references/report-generation.md` and produce the report following its stru
 
 - Only rate based on what was actually observed — never assume
 - If a check fails or returns no data, mark UNKNOWN
+- If a check fails with a permissions error, mark UNKNOWN and note the failure reason; in the report, direct the user to the "Resource Access (Prerequisites)" section of the skill README to grant the review read permissions
 - Prioritize by blast radius: security > availability > cost
 - Every RED finding must have a specific, actionable recommendation
 
